@@ -1,0 +1,743 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kelola Pengajuan - PPSU</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    .status-badge {
+      display: inline-flex; align-items: center; gap: 0.3rem;
+      padding: 0.3rem 0.75rem; border-radius: 9999px;
+      font-size: 0.72rem; font-weight: 600; letter-spacing: 0.01em;
+    }
+    .status-menunggu   { background: #fef3c7; color: #92400e; }
+    .status-disetujui  { background: #d1fae5; color: #065f46; }
+    .status-ditolak    { background: #fee2e2; color: #991b1b; }
+    .status-selesai    { background: #dbeafe; color: #1e40af; }
+    .status-terjadwal  { background: #e0e7ff; color: #3730a3; }
+
+    .card-hover { transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease; }
+    .card-hover:hover { transform: translateY(-2px); box-shadow: 0 10px 32px rgba(15, 23, 42, 0.07); border-color: #dbe4f0; }
+    .meta-chip svg { color: #1e40af; }
+
+    .modal-overlay {
+      position: fixed; inset: 0; background: rgba(15, 23, 42, 0.45);
+      display: none; align-items: center; justify-content: center;
+      padding: 1rem; z-index: 50;
+    }
+    .modal-overlay.active { display: flex; }
+    @keyframes modalIn { from { opacity: 0; transform: translateY(8px) scale(.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
+    .modal-box { animation: modalIn .18s ease both; }
+  </style>
+</head>
+<body class="bg-gray-100">
+
+  <%- include('../../partials/sidebar_admin', { user: locals.user, currentPath: locals.currentPath }) %>
+
+  <div class="min-h-screen">
+    <!-- TOP BAR -->
+    <div class="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between" style="padding-left: 64px;">
+      <div class="flex items-center gap-3 pl-8">
+        <img src="/images/paramadinalogo.svg" alt="PPSU" class="h-7 object-contain">
+        <div class="w-px h-10 bg-gray-200"></div>
+        <div class="flex flex-col leading-tight">
+          <span class="text-sm font-bold text-gray-800">Kelola Pengajuan</span>
+          <span class="text-[10px] font-semibold text-blue-600 uppercase tracking-wider">
+            Panel Admin PPSU
+          </span>
+        </div>
+      </div>
+
+      <div class="flex items-center pr-2">
+        <a href="/dashboard/admin"
+           class="flex items-center gap-2.5 bg-blue-50 hover:bg-blue-100 border border-blue-100 rounded-full pl-2 pr-4 py-1.5 transition-colors shadow-sm">
+          <span class="w-6 h-6 rounded-full bg-blue-600 flex items-center justify-center shrink-0">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect width="7" height="9" x="3" y="3" rx="1"></rect>
+              <rect width="7" height="5" x="14" y="3" rx="1"></rect>
+              <rect width="7" height="9" x="14" y="12" rx="1"></rect>
+              <rect width="7" height="5" x="3" y="16" rx="1"></rect>
+            </svg>
+          </span>
+          <span class="text-xs font-semibold text-blue-700 whitespace-nowrap">Kelola Pengajuan</span>
+        </a>
+      </div>
+    </div>
+
+    <div class="px-6 py-8" style="padding-left: 64px;">
+      <div class="max-w-[1600px] mx-auto">
+
+        <!-- Alert -->
+        <% if (locals.success_msg && success_msg.length > 0) { %>
+          <div class="bg-green-50 border border-green-200 rounded-lg px-4 py-3 mb-4 text-green-700 text-sm flex items-center gap-2">
+            <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+            <%= success_msg %>
+          </div>
+        <% } %>
+
+        <!-- Ringkasan Statistik -->
+        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-6">
+          <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-4 flex items-center gap-3">
+            <span class="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style="background:#e8effc; color:#1e40af;">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+            </span>
+            <div><p id="statTotal" class="text-lg font-bold text-gray-800">4</p><p class="text-[11px] font-medium text-gray-400">Total Pengajuan</p></div>
+          </div>
+          <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-4 flex items-center gap-3">
+            <span class="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style="background:#fef3c7; color:#92400e;">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><polyline points="12 7 12 12 15 15"></polyline></svg>
+            </span>
+            <div><p id="statMenunggu" class="text-lg font-bold text-gray-800">1</p><p class="text-[11px] font-medium text-gray-400">Menunggu</p></div>
+          </div>
+          <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-4 flex items-center gap-3">
+            <span class="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style="background:#e0e7ff; color:#3730a3;">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+            </span>
+            <div><p id="statTerjadwal" class="text-lg font-bold text-gray-800">1</p><p class="text-[11px] font-medium text-gray-400">Terjadwal</p></div>
+          </div>
+          <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-4 flex items-center gap-3">
+            <span class="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style="background:#dbeafe; color:#1e40af;">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+            </span>
+            <div><p id="statSelesai" class="text-lg font-bold text-gray-800">1</p><p class="text-[11px] font-medium text-gray-400">Selesai</p></div>
+          </div>
+          <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-4 flex items-center gap-3">
+            <span class="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style="background:#fee2e2; color:#991b1b;">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>
+            </span>
+            <div><p id="statDitolak" class="text-lg font-bold text-gray-800">1</p><p class="text-[11px] font-medium text-gray-400">Ditolak</p></div>
+          </div>
+        </div>
+
+        <!-- Filter / Pencarian -->
+        <div class="bg-white rounded-2xl border border-gray-200 p-4 mb-6 shadow-sm">
+          <div class="flex flex-col sm:flex-row gap-3 items-center justify-between">
+            <div class="flex items-center gap-3 w-full sm:w-auto">
+              <div class="relative flex-1 sm:flex-none">
+                <input type="text" placeholder="Cari nama, judul, atau NIM..."
+                       class="w-full sm:w-72 pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                <svg class="absolute left-3 top-2.5 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                </svg>
+              </div>
+              <select class="px-3 py-2 border border-gray-300 rounded-lg text-sm text-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <option value="">Semua Status</option>
+                <option value="menunggu">Menunggu</option>
+                <option value="terjadwal">Terjadwal</option>
+                <option value="selesai">Selesai</option>
+                <option value="ditolak">Ditolak</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Daftar Pengajuan -->
+        <div class="space-y-4" id="cardList">
+
+          <!-- Card 1 - Menunggu Persetujuan -->
+          <div class="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm card-hover" data-card data-status="menunggu">
+            <div class="p-6">
+              <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+                <div class="flex-1">
+                  <div class="flex flex-wrap items-center gap-3 mb-1">
+                    <h3 class="text-base font-bold text-gray-800">Sistem Informasi Akademik Berbasis Web</h3>
+                    <span class="status-badge status-menunggu" data-status-badge>
+                      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><polyline points="12 7 12 12 15 15"></polyline></svg>
+                      Menunggu Persetujuan
+                    </span>
+                  </div>
+                  <p class="text-sm font-semibold text-blue-700 mb-3">Rizky Ananda Putra</p>
+
+                  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-x-4 gap-y-2.5">
+                    <div class="meta-chip flex items-center gap-2 text-sm">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="shrink-0"><rect x="2" y="5" width="20" height="14" rx="2"></rect><line x1="2" y1="10" x2="22" y2="10"></line></svg>
+                      <span class="text-gray-400">NIM</span><span class="font-semibold text-gray-700">2021001</span>
+                    </div>
+                    <div class="meta-chip flex items-center gap-2 text-sm">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="shrink-0"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
+                      <span class="text-gray-400">Prodi</span><span class="font-semibold text-gray-700">Teknik Informatika</span>
+                    </div>
+                    <div class="meta-chip flex items-center gap-2 text-sm">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="shrink-0"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                      <span class="text-gray-400">Pembimbing</span><span class="font-semibold text-gray-700">Dr. Ahmad Fauzi</span>
+                    </div>
+                    <div class="meta-chip flex items-center gap-2 text-sm">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="shrink-0"><path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                      <span class="text-gray-400">Diajukan</span><span class="font-semibold text-gray-700">01 Juli 2026</span>
+                    </div>
+                    <div class="meta-chip flex items-center gap-2 text-sm">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="shrink-0"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="9" y1="13" x2="15" y2="13"></line></svg>
+                      <span class="text-gray-400">Jenis</span><span class="font-semibold text-gray-700">Seminar Proposal</span>
+                    </div>
+                  </div>
+
+                  <!-- Lampiran -->
+                  <div class="flex flex-wrap gap-2 mt-4">
+                    <a href="#" class="flex items-center gap-2 text-xs font-medium text-gray-600 bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-lg px-3 py-1.5 transition">
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+                      Draft Karya Akhir
+                    </a>
+                    <a href="#" class="flex items-center gap-2 text-xs font-medium text-gray-600 bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-lg px-3 py-1.5 transition">
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+                      Form Pendaftaran (E-sign)
+                    </a>
+                  </div>
+                </div>
+
+                <div class="flex flex-col gap-2 shrink-0 w-full md:w-auto" data-action-area>
+                  <button type="button" class="btn-setujui px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-sm font-semibold text-white transition flex items-center justify-center gap-1.5 shadow-md shadow-blue-200">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                    Setujui & Jadwalkan
+                  </button>
+                  <button type="button" class="btn-tolak px-4 py-2 bg-white hover:bg-red-50 border border-red-200 rounded-lg text-sm font-semibold text-red-600 transition flex items-center justify-center gap-1.5">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                    Tolak
+                  </button>
+                </div>
+              </div>
+
+              <div class="info-sidang-slot"></div>
+            </div>
+          </div>
+
+          <!-- Card 2 - Terjadwal -->
+          <div class="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm card-hover" data-card data-status="terjadwal">
+            <div class="p-6">
+              <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+                <div class="flex-1">
+                  <div class="flex flex-wrap items-center gap-3 mb-1">
+                    <h3 class="text-base font-bold text-gray-800">Sistem Informasi Geografis untuk Pemetaan Wilayah</h3>
+                    <span class="status-badge status-terjadwal" data-status-badge>
+                      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                      Terjadwal
+                    </span>
+                  </div>
+                  <p class="text-sm font-semibold text-blue-700 mb-3">Siti Nurhaliza</p>
+
+                  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-x-4 gap-y-2.5">
+                    <div class="meta-chip flex items-center gap-2 text-sm">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="shrink-0"><rect x="2" y="5" width="20" height="14" rx="2"></rect><line x1="2" y1="10" x2="22" y2="10"></line></svg>
+                      <span class="text-gray-400">NIM</span><span class="font-semibold text-gray-700">2021005</span>
+                    </div>
+                    <div class="meta-chip flex items-center gap-2 text-sm">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="shrink-0"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
+                      <span class="text-gray-400">Prodi</span><span class="font-semibold text-gray-700">Teknik Informatika</span>
+                    </div>
+                    <div class="meta-chip flex items-center gap-2 text-sm">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="shrink-0"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                      <span class="text-gray-400">Pembimbing</span><span class="font-semibold text-gray-700">Dr. Budi Santoso</span>
+                    </div>
+                    <div class="meta-chip flex items-center gap-2 text-sm">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="shrink-0"><path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                      <span class="text-gray-400">Diajukan</span><span class="font-semibold text-gray-700">25 Juni 2026</span>
+                    </div>
+                    <div class="meta-chip flex items-center gap-2 text-sm">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="shrink-0"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="9" y1="13" x2="15" y2="13"></line></svg>
+                      <span class="text-gray-400">Jenis</span><span class="font-semibold text-gray-700">Kolokium</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="flex flex-col gap-2 shrink-0 w-full md:w-auto" data-action-area>
+                  <button type="button" class="btn-edit-jadwal px-4 py-2 bg-white hover:bg-blue-50 border border-blue-200 rounded-lg text-sm font-semibold text-blue-700 transition flex items-center justify-center gap-1.5">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                    Edit Jadwal
+                  </button>
+                </div>
+              </div>
+
+              <!-- Info Sidang -->
+              <div class="info-sidang-slot mt-4 pt-4 border-t border-gray-100">
+                <div class="rounded-xl border border-gray-200 overflow-hidden">
+                  <div class="px-4 py-2.5 flex items-center gap-2" style="background: linear-gradient(135deg, #1e40af 0%, #2563eb 100%);">
+                    <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                    <h4 class="text-xs font-bold text-white tracking-wide">INFORMASI SIDANG</h4>
+                  </div>
+                  <div class="grid grid-cols-1 md:grid-cols-3 gap-3 p-4" style="background:#f8fafc;">
+                    <div class="bg-white rounded-lg p-3 border border-gray-200" data-slot="jadwal">
+                      <div class="flex items-center gap-2 mb-1.5">
+                        <span class="w-7 h-7 rounded-lg flex items-center justify-center shrink-0" style="background:#e8effc; color:#1e40af;">
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                        </span>
+                        <span class="text-[11px] font-bold uppercase tracking-wide text-gray-500">Jadwal Sidang</span>
+                      </div>
+                      <p class="text-sm text-gray-800"><span class="text-gray-400">Hari:</span> <span class="font-semibold" data-field="hari">Senin, 15 Juli 2026</span></p>
+                      <p class="text-sm text-gray-800"><span class="text-gray-400">Pukul:</span> <span class="font-semibold" data-field="jam">09:00 - 11:00 WIB</span></p>
+                      <p class="text-sm text-gray-800"><span class="text-gray-400">Ruang:</span> <span class="font-semibold" data-field="ruang">Seminar A101</span></p>
+                    </div>
+                    <div class="bg-white rounded-lg p-3 border border-gray-200" data-slot="penguji">
+                      <div class="flex items-center gap-2 mb-1.5">
+                        <span class="w-7 h-7 rounded-lg flex items-center justify-center shrink-0" style="background:#e8effc; color:#1e40af;">
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+                        </span>
+                        <span class="text-[11px] font-bold uppercase tracking-wide text-gray-500">Tim Penguji</span>
+                      </div>
+                      <div data-field="daftar-penguji">
+                        <p class="text-sm text-gray-800 font-medium">1. Dr. Ahmad Fauzi <span class="text-gray-400 font-normal">(Ketua)</span></p>
+                        <p class="text-sm text-gray-800 font-medium">2. Dr. Budi Santoso <span class="text-gray-400 font-normal">(Anggota)</span></p>
+                        <p class="text-sm text-gray-800 font-medium">3. Dr. Citra Dewi <span class="text-gray-400 font-normal">(Anggota)</span></p>
+                      </div>
+                    </div>
+                    <div class="bg-white rounded-lg p-3 border border-gray-200" data-slot="teknik">
+                      <div class="flex items-center gap-2 mb-1.5">
+                        <span class="w-7 h-7 rounded-lg flex items-center justify-center shrink-0" style="background:#e8effc; color:#1e40af;">
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9"></path></svg>
+                        </span>
+                        <span class="text-[11px] font-bold uppercase tracking-wide text-gray-500">Teknik Sidang</span>
+                      </div>
+                      <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200" data-field="teknik-badge">
+                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
+                        Sidang Daring
+                      </span>
+                      <p class="text-gray-500 mt-1.5 text-xs truncate" data-field="teknik-detail">zoom.us/meeting/123456789</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Card 3 - Selesai -->
+          <div class="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm card-hover" data-card data-status="selesai">
+            <div class="p-6">
+              <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+                <div class="flex-1">
+                  <div class="flex flex-wrap items-center gap-3 mb-1">
+                    <h3 class="text-base font-bold text-gray-800">Analisis Data Penjualan Menggunakan Machine Learning</h3>
+                    <span class="status-badge status-selesai" data-status-badge>
+                      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                      Selesai
+                    </span>
+                  </div>
+                  <p class="text-sm font-semibold text-blue-700 mb-3">Muhammad Fajar</p>
+
+                  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-x-4 gap-y-2.5">
+                    <div class="meta-chip flex items-center gap-2 text-sm">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="shrink-0"><rect x="2" y="5" width="20" height="14" rx="2"></rect><line x1="2" y1="10" x2="22" y2="10"></line></svg>
+                      <span class="text-gray-400">NIM</span><span class="font-semibold text-gray-700">2021012</span>
+                    </div>
+                    <div class="meta-chip flex items-center gap-2 text-sm">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="shrink-0"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
+                      <span class="text-gray-400">Prodi</span><span class="font-semibold text-gray-700">Teknik Informatika</span>
+                    </div>
+                    <div class="meta-chip flex items-center gap-2 text-sm">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="shrink-0"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                      <span class="text-gray-400">Pembimbing</span><span class="font-semibold text-gray-700">Dr. Eko Prasetyo</span>
+                    </div>
+                    <div class="meta-chip flex items-center gap-2 text-sm">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="shrink-0"><path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                      <span class="text-gray-400">Diajukan</span><span class="font-semibold text-gray-700">10 Juni 2026</span>
+                    </div>
+                    <div class="meta-chip flex items-center gap-2 text-sm">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="shrink-0"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="9" y1="13" x2="15" y2="13"></line></svg>
+                      <span class="text-gray-400">Jenis</span><span class="font-semibold text-gray-700">Seminar Proposal</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="info-sidang-slot mt-4 pt-4 border-t border-gray-100">
+                <div class="flex items-start gap-3 rounded-xl border border-emerald-200 bg-emerald-50 p-3.5">
+                  <span class="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style="background:#d1fae5; color:#065f46;">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                  </span>
+                  <div>
+                    <p class="text-sm text-emerald-800 font-semibold">Sidang telah dilaksanakan</p>
+                    <p class="text-sm text-emerald-700 mt-0.5">Rabu, 12 Juli 2026 · 13:00–15:00 WIB · Ruang Seminar A101</p>
+                    <p class="text-sm text-emerald-700">Teknik: Daring (Online) via Zoom</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Card 4 - Ditolak -->
+          <div class="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm card-hover" data-card data-status="ditolak">
+            <div class="p-6">
+              <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+                <div class="flex-1">
+                  <div class="flex flex-wrap items-center gap-3 mb-1">
+                    <h3 class="text-base font-bold text-gray-800">Sistem Keamanan Jaringan Menggunakan AI</h3>
+                    <span class="status-badge status-ditolak" data-status-badge>
+                      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>
+                      Ditolak
+                    </span>
+                  </div>
+                  <p class="text-sm font-semibold text-blue-700 mb-3">Dewi Lestari</p>
+
+                  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-x-4 gap-y-2.5">
+                    <div class="meta-chip flex items-center gap-2 text-sm">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="shrink-0"><rect x="2" y="5" width="20" height="14" rx="2"></rect><line x1="2" y1="10" x2="22" y2="10"></line></svg>
+                      <span class="text-gray-400">NIM</span><span class="font-semibold text-gray-700">2021020</span>
+                    </div>
+                    <div class="meta-chip flex items-center gap-2 text-sm">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="shrink-0"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
+                      <span class="text-gray-400">Prodi</span><span class="font-semibold text-gray-700">Teknik Informatika</span>
+                    </div>
+                    <div class="meta-chip flex items-center gap-2 text-sm">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="shrink-0"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                      <span class="text-gray-400">Pembimbing</span><span class="font-semibold text-gray-700">Dr. Fitriani</span>
+                    </div>
+                    <div class="meta-chip flex items-center gap-2 text-sm">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="shrink-0"><path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                      <span class="text-gray-400">Diajukan</span><span class="font-semibold text-gray-700">05 Juli 2026</span>
+                    </div>
+                    <div class="meta-chip flex items-center gap-2 text-sm">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="shrink-0"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="9" y1="13" x2="15" y2="13"></line></svg>
+                      <span class="text-gray-400">Jenis</span><span class="font-semibold text-gray-700">Kolokium</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="info-sidang-slot mt-4 pt-4 border-t border-gray-100">
+                <div class="flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 p-3.5">
+                  <span class="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style="background:#fee2e2; color:#991b1b;">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                  </span>
+                  <div>
+                    <p class="text-sm text-red-800 font-semibold">Alasan Penolakan</p>
+                    <p class="text-sm text-red-700 mt-0.5" data-field="alasan-tolak">Draft karya akhir perlu direvisi dan disetujui ulang oleh dosen pembimbing.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════ MODAL: SETUJUI & JADWALKAN ══════════ -->
+  <div class="modal-overlay" id="modalSetujui">
+    <div class="modal-box bg-white rounded-2xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+      <div class="px-6 py-4 flex items-center justify-between sticky top-0 z-10" style="background: linear-gradient(135deg, #1e40af 0%, #2563eb 100%);">
+        <div>
+          <span class="text-white font-bold text-sm tracking-wide">SETUJUI & JADWALKAN SIDANG</span>
+          <p class="text-blue-200 text-xs mt-0.5" id="modalSetujuiSubtitle">Lengkapi detail pelaksanaan sidang</p>
+        </div>
+        <button type="button" class="modal-close text-white/80 hover:text-white" data-modal="modalSetujui">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
+      </div>
+
+      <form id="formSetujui" class="px-6 py-6 space-y-5">
+        <!-- Tanggal & Jam -->
+        <div>
+          <p class="text-xs font-bold uppercase tracking-wide text-gray-500 mb-2">Jadwal</p>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div>
+              <label class="block text-xs font-medium text-gray-600 mb-1">Tanggal Sidang</label>
+              <input type="date" name="tanggal" required class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-gray-600 mb-1">Jam Mulai</label>
+              <input type="time" name="jam_mulai" required class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-gray-600 mb-1">Jam Selesai</label>
+              <input type="time" name="jam_selesai" required class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+            </div>
+          </div>
+        </div>
+
+        <!-- Teknik Sidang -->
+        <div>
+          <p class="text-xs font-bold uppercase tracking-wide text-gray-500 mb-2">Teknik Sidang</p>
+          <div class="flex gap-3 mb-3">
+            <label class="flex-1 flex items-center gap-2 border border-gray-300 rounded-lg px-3 py-2.5 cursor-pointer has-[:checked]:border-blue-500 has-[:checked]:bg-blue-50 has-[:checked]:ring-1 has-[:checked]:ring-blue-500 transition">
+              <input type="radio" name="teknik" value="offline" checked class="accent-blue-600">
+              <span class="text-sm font-medium text-gray-700">Offline (Tatap Muka)</span>
+            </label>
+            <label class="flex-1 flex items-center gap-2 border border-gray-300 rounded-lg px-3 py-2.5 cursor-pointer has-[:checked]:border-blue-500 has-[:checked]:bg-blue-50 has-[:checked]:ring-1 has-[:checked]:ring-blue-500 transition">
+              <input type="radio" name="teknik" value="online" class="accent-blue-600">
+              <span class="text-sm font-medium text-gray-700">Online (Daring)</span>
+            </label>
+          </div>
+          <div id="fieldOffline">
+            <label class="block text-xs font-medium text-gray-600 mb-1">Ruang Sidang</label>
+            <input type="text" name="ruang" placeholder="Contoh: Ruang Seminar A101" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+          </div>
+          <div id="fieldOnline" class="hidden">
+            <label class="block text-xs font-medium text-gray-600 mb-1">Link Meeting (Zoom / Google Meet)</label>
+            <input type="text" name="link_meeting" placeholder="https://zoom.us/j/..." class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+          </div>
+        </div>
+
+        <!-- Tim Penguji -->
+        <div>
+          <div class="flex items-center justify-between mb-2">
+            <p class="text-xs font-bold uppercase tracking-wide text-gray-500">Tim Penguji</p>
+            <button type="button" id="btnAddPenguji" class="text-xs font-semibold text-blue-600 hover:text-blue-700 flex items-center gap-1">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v16m8-8H4"></path></svg>
+              Tambah Penguji
+            </button>
+          </div>
+          <div id="pengujiList" class="space-y-2"></div>
+        </div>
+
+        <div class="flex justify-end gap-3 pt-2 border-t border-gray-100">
+          <button type="button" class="modal-close px-5 py-2 rounded-lg border border-gray-300 text-gray-600 text-sm font-semibold hover:bg-gray-50 transition" data-modal="modalSetujui">Batal</button>
+          <button type="submit" class="px-5 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold transition shadow-md shadow-blue-200">Simpan & Setujui</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ══════════ MODAL: TOLAK PENGAJUAN ══════════ -->
+  <div class="modal-overlay" id="modalTolak">
+    <div class="modal-box bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden">
+      <div class="px-6 py-4 flex items-center justify-between" style="background: linear-gradient(135deg, #991b1b 0%, #dc2626 100%);">
+        <div>
+          <span class="text-white font-bold text-sm tracking-wide">TOLAK PENGAJUAN</span>
+          <p class="text-red-200 text-xs mt-0.5" id="modalTolakSubtitle">Beri alasan agar pemohon bisa merevisi</p>
+        </div>
+        <button type="button" class="modal-close text-white/80 hover:text-white" data-modal="modalTolak">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
+      </div>
+      <form id="formTolak" class="px-6 py-6 space-y-4">
+        <div>
+          <label class="block text-xs font-medium text-gray-600 mb-1.5">Alasan Penolakan <span class="text-red-500">*</span></label>
+          <textarea name="alasan" rows="4" required placeholder="Contoh: Draft karya akhir perlu direvisi dan disetujui ulang oleh dosen pembimbing."
+            class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-400 resize-none"></textarea>
+        </div>
+        <div class="flex justify-end gap-3 pt-2 border-t border-gray-100">
+          <button type="button" class="modal-close px-5 py-2 rounded-lg border border-gray-300 text-gray-600 text-sm font-semibold hover:bg-gray-50 transition" data-modal="modalTolak">Batal</button>
+          <button type="submit" class="px-5 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white text-sm font-semibold transition shadow-md shadow-red-200">Tolak Pengajuan</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    // ── Buka/tutup modal ──
+    let activeCard = null;
+
+    function openModal(id) {
+      document.getElementById(id).classList.add('active');
+    }
+    function closeModal(id) {
+      document.getElementById(id).classList.remove('active');
+    }
+    document.querySelectorAll('.modal-close').forEach(btn => {
+      btn.addEventListener('click', () => closeModal(btn.dataset.modal));
+    });
+    document.querySelectorAll('.modal-overlay').forEach(overlay => {
+      overlay.addEventListener('click', (e) => {
+        if (e.target === overlay) closeModal(overlay.id);
+      });
+    });
+
+    document.querySelectorAll('.btn-setujui').forEach(btn => {
+      btn.addEventListener('click', () => {
+        activeCard = btn.closest('[data-card]');
+        const judul = activeCard.querySelector('h3').textContent.trim();
+        document.getElementById('modalSetujuiSubtitle').textContent = judul;
+        openModal('modalSetujui');
+      });
+    });
+    document.querySelectorAll('.btn-tolak').forEach(btn => {
+      btn.addEventListener('click', () => {
+        activeCard = btn.closest('[data-card]');
+        const judul = activeCard.querySelector('h3').textContent.trim();
+        document.getElementById('modalTolakSubtitle').textContent = judul;
+        openModal('modalTolak');
+      });
+    });
+
+    // ── Toggle field offline/online ──
+    document.querySelectorAll('input[name="teknik"]').forEach(radio => {
+      radio.addEventListener('change', () => {
+        const isOnline = document.querySelector('input[name="teknik"]:checked').value === 'online';
+        document.getElementById('fieldOffline').classList.toggle('hidden', isOnline);
+        document.getElementById('fieldOnline').classList.toggle('hidden', !isOnline);
+      });
+    });
+
+    // ── Tim Penguji dinamis ──
+    const pengujiList = document.getElementById('pengujiList');
+    let pengujiCount = 0;
+
+    function addPengujiRow(nama = '', peran = 'Anggota') {
+      pengujiCount++;
+      const row = document.createElement('div');
+      row.className = 'flex items-center gap-2';
+      row.innerHTML = `
+        <input type="text" name="penguji_nama[]" value="${nama}" placeholder="Nama dosen penguji" required
+          class="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+        <select name="penguji_peran[]" class="border border-gray-300 rounded-lg px-2 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+          <option value="Ketua" ${peran === 'Ketua' ? 'selected' : ''}>Ketua</option>
+          <option value="Anggota" ${peran === 'Anggota' ? 'selected' : ''}>Anggota</option>
+        </select>
+        <button type="button" class="remove-penguji shrink-0 w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 hover:text-red-500 hover:bg-red-50 transition">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
+      `;
+      row.querySelector('.remove-penguji').addEventListener('click', () => row.remove());
+      pengujiList.appendChild(row);
+    }
+
+    document.getElementById('btnAddPenguji').addEventListener('click', () => addPengujiRow());
+
+    function resetPengujiDefault() {
+      pengujiList.innerHTML = '';
+      addPengujiRow('', 'Ketua');
+      addPengujiRow('', 'Anggota');
+    }
+    resetPengujiDefault();
+
+    // ── Update ringkasan statistik ──
+    function updateStats() {
+      const cards = document.querySelectorAll('[data-card]');
+      const counts = { menunggu: 0, terjadwal: 0, selesai: 0, ditolak: 0 };
+      cards.forEach(c => { if (counts[c.dataset.status] !== undefined) counts[c.dataset.status]++; });
+      document.getElementById('statTotal').textContent = cards.length;
+      document.getElementById('statMenunggu').textContent = counts.menunggu;
+      document.getElementById('statTerjadwal').textContent = counts.terjadwal;
+      document.getElementById('statSelesai').textContent = counts.selesai;
+      document.getElementById('statDitolak').textContent = counts.ditolak;
+    }
+
+    // ── Submit: Setujui & Jadwalkan (demo: update UI lokal) ──
+    document.getElementById('formSetujui').addEventListener('submit', (e) => {
+      e.preventDefault();
+      if (!activeCard) return;
+      const fd = new FormData(e.target);
+
+      const tanggal = fd.get('tanggal');
+      const jamMulai = fd.get('jam_mulai');
+      const jamSelesai = fd.get('jam_selesai');
+      const teknik = fd.get('teknik');
+      const ruang = fd.get('ruang');
+      const link = fd.get('link_meeting');
+      const namaArr = fd.getAll('penguji_nama[]');
+      const peranArr = fd.getAll('penguji_peran[]');
+
+      // TODO produksi: kirim data ini via fetch/POST ke endpoint backend, contoh:
+      // await fetch('/dashboard/admin/kelola-pengajuan/' + pengajuanId + '/setujui', { method: 'POST', body: fd })
+
+      const tanggalFmt = tanggal ? new Date(tanggal + 'T00:00:00').toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) : '-';
+
+      // Ubah status badge
+      const badge = activeCard.querySelector('[data-status-badge]');
+      badge.className = 'status-badge status-terjadwal';
+      badge.innerHTML = '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg> Terjadwal';
+      activeCard.dataset.status = 'terjadwal';
+
+      // Ganti area aksi jadi "Edit Jadwal"
+      const actionArea = activeCard.querySelector('[data-action-area]');
+      actionArea.innerHTML = `
+        <button type="button" class="btn-edit-jadwal px-4 py-2 bg-white hover:bg-blue-50 border border-blue-200 rounded-lg text-sm font-semibold text-blue-700 transition flex items-center justify-center gap-1.5">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+          Edit Jadwal
+        </button>`;
+
+      // Render panel Informasi Sidang
+      const teknikBadgeHtml = teknik === 'online'
+        ? '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg> Sidang Daring'
+        : '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M5 21V7l8-4v18M19 21V11l-6-4"></path></svg> Sidang Tatap Muka';
+      const teknikDetail = teknik === 'online' ? (link || '-') : (ruang || '-');
+      const pengujiHtml = namaArr.map((n, i) => `<p class="text-sm text-gray-800 font-medium">${i + 1}. ${n || '-'} <span class="text-gray-400 font-normal">(${peranArr[i]})</span></p>`).join('');
+
+      const slot = activeCard.querySelector('.info-sidang-slot');
+      slot.className = 'info-sidang-slot mt-4 pt-4 border-t border-gray-100';
+      slot.innerHTML = `
+        <div class="rounded-xl border border-gray-200 overflow-hidden">
+          <div class="px-4 py-2.5 flex items-center gap-2" style="background: linear-gradient(135deg, #1e40af 0%, #2563eb 100%);">
+            <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+            <h4 class="text-xs font-bold text-white tracking-wide">INFORMASI SIDANG</h4>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-3 p-4" style="background:#f8fafc;">
+            <div class="bg-white rounded-lg p-3 border border-gray-200">
+              <div class="flex items-center gap-2 mb-1.5">
+                <span class="w-7 h-7 rounded-lg flex items-center justify-center shrink-0" style="background:#e8effc; color:#1e40af;">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                </span>
+                <span class="text-[11px] font-bold uppercase tracking-wide text-gray-500">Jadwal Sidang</span>
+              </div>
+              <p class="text-sm text-gray-800"><span class="text-gray-400">Hari:</span> <span class="font-semibold">${tanggalFmt}</span></p>
+              <p class="text-sm text-gray-800"><span class="text-gray-400">Pukul:</span> <span class="font-semibold">${jamMulai || '-'} - ${jamSelesai || '-'} WIB</span></p>
+              <p class="text-sm text-gray-800"><span class="text-gray-400">${teknik === 'online' ? 'Link' : 'Ruang'}:</span> <span class="font-semibold">${teknik === 'online' ? (link || '-') : (ruang || '-')}</span></p>
+            </div>
+            <div class="bg-white rounded-lg p-3 border border-gray-200">
+              <div class="flex items-center gap-2 mb-1.5">
+                <span class="w-7 h-7 rounded-lg flex items-center justify-center shrink-0" style="background:#e8effc; color:#1e40af;">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+                </span>
+                <span class="text-[11px] font-bold uppercase tracking-wide text-gray-500">Tim Penguji</span>
+              </div>
+              ${pengujiHtml || '<p class="text-sm text-gray-400">Belum ada penguji</p>'}
+            </div>
+            <div class="bg-white rounded-lg p-3 border border-gray-200">
+              <div class="flex items-center gap-2 mb-1.5">
+                <span class="w-7 h-7 rounded-lg flex items-center justify-center shrink-0" style="background:#e8effc; color:#1e40af;">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9"></path></svg>
+                </span>
+                <span class="text-[11px] font-bold uppercase tracking-wide text-gray-500">Teknik Sidang</span>
+              </div>
+              <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold ${teknik === 'online' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-indigo-50 text-indigo-700 border border-indigo-200'}">
+                ${teknikBadgeHtml}
+              </span>
+              <p class="text-gray-500 mt-1.5 text-xs truncate">${teknikDetail}</p>
+            </div>
+          </div>
+        </div>
+      `;
+
+      updateStats();
+      closeModal('modalSetujui');
+      e.target.reset();
+      resetPengujiDefault();
+      document.getElementById('fieldOffline').classList.remove('hidden');
+      document.getElementById('fieldOnline').classList.add('hidden');
+      activeCard = null;
+    });
+
+    // ── Submit: Tolak Pengajuan (demo: update UI lokal) ──
+    document.getElementById('formTolak').addEventListener('submit', (e) => {
+      e.preventDefault();
+      if (!activeCard) return;
+      const fd = new FormData(e.target);
+      const alasan = fd.get('alasan');
+
+      // TODO produksi: kirim ke endpoint backend, contoh:
+      // await fetch('/dashboard/admin/kelola-pengajuan/' + pengajuanId + '/tolak', { method: 'POST', body: fd })
+
+      const badge = activeCard.querySelector('[data-status-badge]');
+      badge.className = 'status-badge status-ditolak';
+      badge.innerHTML = '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg> Ditolak';
+      activeCard.dataset.status = 'ditolak';
+
+      const actionArea = activeCard.querySelector('[data-action-area]');
+      if (actionArea) actionArea.innerHTML = '';
+
+      const slot = activeCard.querySelector('.info-sidang-slot');
+      slot.className = 'info-sidang-slot mt-4 pt-4 border-t border-gray-100';
+      slot.innerHTML = `
+        <div class="flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 p-3.5">
+          <span class="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style="background:#fee2e2; color:#991b1b;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+          </span>
+          <div>
+            <p class="text-sm text-red-800 font-semibold">Alasan Penolakan</p>
+            <p class="text-sm text-red-700 mt-0.5">${alasan}</p>
+          </div>
+        </div>
+      `;
+
+      updateStats();
+      closeModal('modalTolak');
+      e.target.reset();
+      activeCard = null;
+    });
+
+    updateStats();
+  </script>
+
+</body>
+</html>

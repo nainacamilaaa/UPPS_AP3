@@ -1,0 +1,235 @@
+<!--
+  PARTIAL: Sidebar Pemohon (PPSU)
+  Cara pakai di halaman lain (contoh, JANGAN taruh tag EJS asli di komentar ini):
+  include partials/sidebar dengan mengirim { user, currentPath }
+
+  Pastikan controller mengirim:
+    - user: { name, jabatan }
+    - currentPath: req.path (atau req.originalUrl)
+-->
+
+<style>
+  .pemohon-nav-scroll::-webkit-scrollbar { width: 5px; }
+  .pemohon-nav-scroll::-webkit-scrollbar-track { background: transparent; }
+  .pemohon-nav-scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.10); border-radius: 10px; }
+  .pemohon-nav-scroll::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.18); }
+  .pemohon-nav-item:hover .pemohon-nav-icon { transform: scale(1.06); }
+
+  .pemohon-nav-item {
+    width: 100%; display: flex; align-items: center; gap: 12px;
+    padding: 9px 12px; border-radius: 11px;
+    background: transparent; box-shadow: none; border: none; cursor: pointer;
+    color: #8b96ab; font-size: 0.83rem; font-weight: 500; text-align: left;
+    text-decoration: none;
+    transition: background 0.18s ease, color 0.18s ease, transform 0.18s ease;
+  }
+  .pemohon-nav-item:hover:not(.active) {
+    background: rgba(255,255,255,0.05);
+    color: #e2e8f0;
+    transform: translateX(2px);
+  }
+  .pemohon-nav-item.active {
+    background: rgba(37,99,235,0.18);
+    box-shadow: 0 0 0 1px rgba(59,123,245,0.3), 0 4px 14px rgba(37,99,235,0.18);
+    color: #a8c8ff;
+    font-weight: 600;
+  }
+  .pemohon-nav-icon {
+    width: 28px; height: 28px; border-radius: 8px;
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    background: transparent; color: inherit;
+    transition: transform 0.18s ease;
+  }
+  .pemohon-nav-item.active .pemohon-nav-icon {
+    background: linear-gradient(160deg, #3b7bf5 0%, #2563EB 100%);
+    color: #fff;
+  }
+
+  #sidebarOverlay {
+    position: fixed; inset: 0; background-color: rgba(0,0,0,0.45);
+    z-index: 40; backdrop-filter: blur(2px);
+    transition: opacity 0.25s ease;
+    display: none;
+  }
+  #sidebarOverlay.open { display: block; }
+
+  #pemohonSidebar {
+    position: fixed; top: 10px; left: 10px;
+    height: calc(100vh - 20px); width: 276px;
+    background: linear-gradient(190deg, #14295a 0%, #0f2044 55%, #0c1a37 100%);
+    z-index: 50; display: flex; flex-direction: column;
+    border-radius: 18px; border: 1px solid rgba(255,255,255,0.06);
+    transform: translateX(calc(-100% - 20px));
+    transition: transform 0.36s cubic-bezier(0.32, 0.72, 0, 1);
+    overflow: hidden;
+  }
+  #pemohonSidebar.open {
+    transform: translateX(0);
+    box-shadow: 8px 0 40px rgba(0,0,0,0.4), 0 0 0 1px rgba(255,255,255,0.03);
+  }
+
+  #sidebarCloseBtn {
+    background: rgba(255,255,255,0.07); border: none; border-radius: 9px;
+    padding: 7px; cursor: pointer; color: #94a3b8;
+    display: flex; align-items: center; justify-content: center;
+    transition: background 0.15s, color 0.15s, transform 0.15s;
+  }
+  #sidebarCloseBtn:hover { background: rgba(255,255,255,0.13); color: #e2e8f0; transform: rotate(90deg); }
+
+  #sidebarOpenBtn {
+    position: fixed; top: 14px; left: 16px; z-index: 30;
+    background: #fff; border: 1px solid #e5e7eb; cursor: pointer;
+    padding: 8px; border-radius: 9px; color: #475569;
+    display: flex; align-items: center;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.07);
+    transition: background 0.15s, box-shadow 0.15s;
+  }
+  #sidebarOpenBtn:hover { background: #f8fafc; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+  #sidebarOpenBtn.hidden { display: none; }
+
+  .settings-btn, .logout-btn {
+    width: 100%; display: flex; align-items: center; gap: 12px;
+    padding: 9px 12px; border-radius: 11px; background: transparent; border: none;
+    cursor: pointer; font-size: 0.83rem; font-weight: 500; text-align: left;
+    transition: background 0.15s, color 0.15s;
+    text-decoration: none;
+  }
+  .settings-btn { color: #8b96ab; }
+  .settings-btn:hover { background: rgba(255,255,255,0.05); color: #e2e8f0; }
+  .logout-btn { color: #f87171; }
+  .logout-btn:hover { background: rgba(248,113,113,0.12); color: #fca5a5; }
+</style>
+
+<!-- Overlay -->
+<div id="sidebarOverlay" onclick="closePemohonSidebar()"></div>
+
+<!-- Sidebar -->
+<aside id="pemohonSidebar">
+
+  <!-- Brand -->
+  <div style="padding: 20px 18px 16px; border-bottom: 1px solid rgba(255,255,255,0.07); display: flex; align-items: center; justify-content: space-between;">
+    <div style="display: flex; align-items: center; gap: 11px;">
+      <div style="width: 38px; height: 38px; border-radius: 11px; background: linear-gradient(160deg, #3b7bf5 0%, #2563EB 100%); display: flex; align-items: center; justify-content: center; font-weight: 800; color: #fff; font-size: 0.95rem; box-shadow: 0 3px 10px rgba(37,99,235,0.45), inset 0 1px 0 rgba(255,255,255,0.25);">P</div>
+      <div style="line-height: 1.25;">
+        <p style="color: #fff; font-weight: 700; font-size: 0.92rem; margin: 0;">UPPS</p>
+        <p style="color: #5d9dfa; font-size: 0.6rem; margin: 0; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase;">Pendaftaran &amp; Persetujuan Sidang</p>
+      </div>
+    </div>
+    <button id="sidebarCloseBtn" onclick="closePemohonSidebar()">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="18" y1="6" x2="6" y2="18"></line>
+        <line x1="6" y1="6" x2="18" y2="18"></line>
+      </svg>
+    </button>
+  </div>
+
+  <!-- User card -->
+  <div style="margin: 14px 14px 6px; padding: 12px 13px; border-radius: 13px; background: rgba(255,255,255,0.045); border: 1px solid rgba(255,255,255,0.07); display: flex; align-items: center; gap: 12px;">
+    <div style="position: relative; flex-shrink: 0;">
+      <div style="width: 38px; height: 38px; border-radius: 50%; background: linear-gradient(160deg, #2c4a82 0%, #1e3a6e 100%); display: flex; align-items: center; justify-content: center; color: #7db4ff; font-weight: 700; font-size: 0.85rem; box-shadow: 0 0 0 2px #2563EB, 0 0 0 4px rgba(37,99,235,0.18);">
+        <%= (typeof user !== 'undefined' && user.name) ? user.name.charAt(0).toUpperCase() : 'U' %>
+      </div>
+      <span style="position: absolute; bottom: -1px; right: -1px; width: 10px; height: 10px; border-radius: 50%; background: #22c55e; border: 2px solid #142a57;"></span>
+    </div>
+    <div style="flex: 1; min-width: 0;">
+      <p style="color: #fff; font-size: 0.82rem; font-weight: 600; margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+        <%= (typeof user !== 'undefined' && user.name) ? user.name : 'Pengguna' %>
+      </p>
+      <p style="color: #64748b; font-size: 0.7rem; margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+        <%= (typeof user !== 'undefined' && user.jabatan) ? user.jabatan : '' %>
+      </p>
+    </div>
+    <button style="background: none; border: none; cursor: pointer; padding: 6px; border-radius: 8px; display: flex; align-items: center; flex-shrink: 0;">
+      <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+        <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+      </svg>
+    </button>
+  </div>
+
+  <!-- Nav -->
+  <nav class="pemohon-nav-scroll" style="flex: 1; overflow-y: auto; padding: 8px 0;">
+
+    <p style="color: #3a4a6b; font-size: 0.6rem; font-weight: 700; letter-spacing: 0.12em; padding: 10px 22px 6px; margin: 0;">MENU UTAMA</p>
+    <div style="display: flex; flex-direction: column; gap: 3px; padding: 0 12px; margin-bottom: 8px;">
+      <a href="/dashboard/pemohon" class="pemohon-nav-item <%= (typeof currentPath !== 'undefined' && currentPath === '/dashboard/pemohon') ? 'active' : '' %>">
+        <span class="pemohon-nav-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+            <polyline points="9 22 9 12 15 12 15 22"></polyline>
+          </svg>
+        </span>
+        <span style="flex: 1;">Dashboard</span>
+      </a>
+    </div>
+
+    <p style="color: #3a4a6b; font-size: 0.6rem; font-weight: 700; letter-spacing: 0.12em; padding: 10px 22px 6px; margin: 0;">PENGAJUAN</p>
+    <div style="display: flex; flex-direction: column; gap: 3px; padding: 0 12px; margin-bottom: 8px;">
+      <a href="/dashboard/pemohon/pengajuan/baru" class="pemohon-nav-item <%= (typeof currentPath !== 'undefined' && currentPath.startsWith('/dashboard/pemohon/pengajuan')) ? 'active' : '' %>">
+        <span class="pemohon-nav-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5z"></path>
+            <polyline points="14 2 14 8 20 8"></polyline>
+          </svg>
+        </span>
+        <span style="flex: 1;">Ajukan Sidang Baru</span>
+      </a>
+      <a href="/dashboard/pemohon/data-management" class="pemohon-nav-item <%= (typeof currentPath !== 'undefined' && currentPath.startsWith('/dashboard/pemohon/data-management')) ? 'active' : '' %>">
+        <span class="pemohon-nav-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="18" height="18" rx="2"></rect>
+            <line x1="9" y1="3" x2="9" y2="21"></line>
+          </svg>
+        </span>
+        <span style="flex: 1;">Data Management</span>
+      </a>
+    </div>
+  </nav>
+
+  <!-- Footer actions -->
+  <div style="border-top: 1px solid rgba(255,255,255,0.07); padding: 10px 12px 12px;">
+    <a href="/dashboard/pemohon/pengaturan" class="settings-btn">
+      <span style="width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+        <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="3"></circle>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+        </svg>
+      </span>
+      <span>Pengaturan</span>
+    </a>
+    <form action="/logout" method="GET" style="margin: 0;">
+      <button type="submit" class="logout-btn">
+        <span style="width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+          <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+            <polyline points="16 17 21 12 16 7"></polyline>
+            <line x1="21" y1="12" x2="9" y2="12"></line>
+          </svg>
+        </span>
+        <span>Logout</span>
+      </button>
+    </form>
+  </div>
+</aside>
+
+<!-- Open button (hamburger) -->
+<button id="sidebarOpenBtn" onclick="openPemohonSidebar()">
+  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <line x1="4" y1="12" x2="20" y2="12"></line>
+    <line x1="4" y1="6" x2="20" y2="6"></line>
+    <line x1="4" y1="18" x2="20" y2="18"></line>
+  </svg>
+</button>
+
+<script>
+  function openPemohonSidebar() {
+    document.getElementById('pemohonSidebar').classList.add('open');
+    document.getElementById('sidebarOverlay').classList.add('open');
+    document.getElementById('sidebarOpenBtn').classList.add('hidden');
+  }
+  function closePemohonSidebar() {
+    document.getElementById('pemohonSidebar').classList.remove('open');
+    document.getElementById('sidebarOverlay').classList.remove('open');
+    document.getElementById('sidebarOpenBtn').classList.remove('hidden');
+  }
+</script>

@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Konfirmasi Pendaftaran Sidang - PPSU</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100">
+
+  <%- include('../../partials/sidebar', { user: locals.user, currentPath: locals.currentPath }) %>
+
+  <div class="min-h-screen">
+
+    <!-- ─── TOP BAR ─── -->
+    <div class="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between" style="padding-left: 64px;">
+      <div class="flex items-center gap-3 pl-8">
+        <img src="/images/paramadinalogo.svg" alt="PPSU" class="h-7 object-contain">
+        <div class="w-px h-10 bg-gray-200"></div>
+        <div class="flex flex-col leading-tight">
+          <span class="text-sm font-bold text-gray-800">Entry Data</span>
+          <span class="text-[10px] font-semibold text-blue-600 uppercase tracking-wider">
+            Formulir Pendaftaran Sidang
+          </span>
+        </div>
+      </div>
+
+      <!-- Step indicator (3 steps) -->
+      <div class="flex items-center gap-0">
+        <div class="flex items-center">
+          <div class="flex items-center gap-2 px-3">
+            <div class="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0 bg-green-500 text-white">&#10003;</div>
+            <span class="text-xs font-medium text-gray-500">Data Pendaftaran</span>
+          </div>
+          <div class="w-8 h-px bg-blue-300"></div>
+        </div>
+        <div class="flex items-center">
+          <div class="flex items-center gap-2 px-3">
+            <div class="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0 bg-blue-600 text-white">2</div>
+            <span class="text-xs font-medium text-blue-600">Konfirmasi</span>
+          </div>
+          <div class="w-8 h-px bg-gray-200"></div>
+        </div>
+        <div class="flex items-center">
+          <div class="flex items-center gap-2 px-3">
+            <div class="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0 bg-gray-100 text-gray-400">3</div>
+            <span class="text-xs font-medium text-gray-400">Detail &amp; Kirim</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="px-6 py-8" style="padding-left: 64px;">
+
+      <div class="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
+
+        <!-- Header -->
+        <div class="px-6 py-4 border-b border-gray-100"
+          style="background: linear-gradient(135deg, #1e40af 0%, #2563eb 100%);">
+          <span class="text-white font-bold text-sm tracking-wide">KONFIRMASI PENDAFTARAN</span>
+          <p class="text-blue-200 text-xs mt-0.5">Informasi tahap persetujuan setelah pendaftaran dikirim</p>
+        </div>
+
+        <div class="px-8 py-6">
+
+          <!-- ── PREVIEW FORM PERSETUJUAN (diisi Kaprodi, bukan mahasiswa) ── -->
+          <p class="text-sm font-semibold text-gray-700 mb-3">Form Persetujuan (Setelah Pendaftaran Dikirim)</p>
+          <div class="border border-gray-200 rounded-lg bg-gray-50 px-6 py-5 opacity-70 pointer-events-none select-none">
+            <p class="text-sm font-bold text-gray-500">
+              Form Persetujuan: <span class="italic font-semibold">(diisi oleh Kaprodi)</span>
+            </p>
+            <p class="text-xs text-gray-400 mt-3 leading-relaxed">
+              Dengan ini Ketua Program Studi menyetujui mahasiswa mendapat tim penguji
+              Seminar Proposal/Sidang Kolokium (*coret salah satu), yaitu:
+            </p>
+
+            <div class="mt-4 space-y-2 text-xs text-gray-400">
+              <div class="flex gap-2">
+                <span class="w-32 shrink-0">Ketua Penguji</span>
+                <span>:</span>
+                <span class="flex-1 border-b border-dotted border-gray-300"></span>
+              </div>
+              <div class="flex gap-2">
+                <span class="w-32 shrink-0">Anggota Penguji</span>
+                <span>:</span>
+                <span class="flex-1 border-b border-dotted border-gray-300"></span>
+              </div>
+            </div>
+
+            <p class="text-xs text-gray-400 mt-4 leading-relaxed">
+              Demikian Ketua Program Studi menyetujui keputusan tersebut untuk dapat dilanjutkan
+              sampai pada kegiatan sidang akhir dan diinformasikan ke mahasiswa serta pihak-pihak terkait.
+            </p>
+
+            <div class="mt-4 text-xs text-gray-400">
+              <p>Jakarta, ………………………</p>
+              <p class="mt-1">Menyetujui,</p>
+              <p class="mt-6 italic">e-sign Kaprodi</p>
+            </div>
+          </div>
+          <p class="text-xs text-gray-400 mt-2">
+            Bagian ini akan diisi dan ditandatangani oleh Kaprodi setelah pendaftaran kamu dikirim — tidak perlu diisi sekarang.
+          </p>
+
+        </div>
+
+        <div class="flex justify-end gap-3 py-6 px-8 border-t border-gray-100">
+          <button
+            type="button"
+            id="backBtn"
+            class="px-6 py-2 rounded-lg border border-gray-300 text-gray-600 text-sm font-semibold hover:bg-gray-50 transition"
+          >
+            Kembali
+          </button>
+          <button
+            type="button"
+            id="nextBtn"
+            class="px-6 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold transition shadow-md shadow-blue-200 flex items-center gap-2"
+          >
+            <span>Lanjutkan</span>
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+              <polyline points="12 5 19 12 12 19"></polyline>
+            </svg>
+          </button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <script>
+    document.getElementById('backBtn').addEventListener('click', () => {
+      window.location.href = '/dashboard/pemohon/pengajuan/baru';
+    });
+    document.getElementById('nextBtn').addEventListener('click', () => {
+      window.location.href = '/dashboard/pemohon/pengajuan/baru/detail';
+    });
+  </script>
+
+</body>
+</html>
