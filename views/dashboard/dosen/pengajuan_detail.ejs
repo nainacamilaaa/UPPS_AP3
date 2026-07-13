@@ -13,7 +13,7 @@
 </head>
 <body class="bg-gray-100">
 
-  <%- include('../../partials/sidebar', { user: locals.user, currentPath: locals.currentPath }) %>
+  <%- include('../../partials/sidebar_dosen', { user: locals.user, currentPath: locals.currentPath }) %>
 
   <div class="min-h-screen">
 
@@ -48,7 +48,7 @@
         </p>
       <% } %>
 
-      <form id="ttdDosenForm" action="/dashboard/dosen/pengajuan/<%= pengajuan.id %>/tanda-tangan" method="POST" class="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
+      <form id="ttdDosenForm" action="/dashboard/dosen/pengajuan/<%= pengajuan._id %>/tanda-tangan" method="POST" class="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
 
         <!-- Header -->
         <div class="px-6 py-4 border-b border-gray-100"
@@ -126,13 +126,11 @@
               </svg>
               <p class="text-sm font-bold text-gray-800">Lampiran Dokumen</p>
             </div>
-            <% if (pengajuan.lampiran && pengajuan.lampiran.length > 0) { %>
-              <% pengajuan.lampiran.forEach(function(file) { %>
-                <a href="<%= file.url %>" target="_blank" class="flex items-center gap-2 text-xs font-medium text-gray-600 bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-lg px-3 py-2 transition w-fit mb-2">
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
-                  <%= file.nama %>
-                </a>
-              <% }); %>
+            <% if (pengajuan.file_draft_karya_akhir) { %>
+              <a href="<%= backendBaseUrl %>/<%= pengajuan.file_draft_karya_akhir.replace(/\\/g, '/') %>" target="_blank" class="flex items-center gap-2 text-xs font-medium text-gray-600 bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-lg px-3 py-2 transition w-fit mb-2">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+                Draft Karya Akhir
+              </a>
             <% } else { %>
               <p class="text-xs text-gray-400">Belum ada lampiran.</p>
             <% } %>
@@ -165,10 +163,11 @@
               <div>
                 <p class="text-[11px] font-semibold uppercase tracking-wide mb-2" style="color: #7c8aa5;">Mengetahui, Dosen Pembimbing</p>
                 <div class="border rounded-lg overflow-hidden bg-white" style="border-color: #dbe4f0;">
-                  <canvas id="signatureCanvas" class="w-full block bg-white" height="90"></canvas>
+                  <canvas id="signatureCanvas" class="w-full block bg-white" height="50"></canvas>
                 </div>
+                
                 <div class="flex items-center justify-between mt-2">
-                  <p class="text-xs text-gray-400">Tanda tangan di sini menggunakan mouse / jari.</p>
+                  <p class="text-xs text-gray-400">Tanda tangan di atas menggunakan mouse / jari.</p>
                   <button type="button" id="clearSignatureBtn"
                     class="shrink-0 ml-3 px-3 py-1.5 rounded text-xs font-medium border border-gray-300 text-gray-600 hover:bg-gray-50 transition">
                     Hapus &amp; Ulangi

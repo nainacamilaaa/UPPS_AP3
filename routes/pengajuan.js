@@ -4,8 +4,21 @@ const { isAuthenticated, isRole } = require('../middleware/auth');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
+const axios = require('axios');
+const FormData = require('form-data');
 
-// Buat folder uploads jika belum ada
+const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:5000/api';
+
+function getAxiosConfig(req, additionalHeaders = {}) {
+  return {
+    headers: {
+      Cookie: req.session.user?.backendCookie || '',
+      ...additionalHeaders
+    }
+  };
+}
+
+// Buat folder uploads sementara jika belum ada
 const uploadDir = path.join(__dirname, '../public/uploads/proposal');
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
@@ -32,7 +45,6 @@ const upload = multer({
   }
 });
 
-// ── STEP 1 ──────────────────────────────────────────
 // GET — tampilkan form data pendaftaran
 router.get('/baru', isAuthenticated, isRole(['pemohon']), (req, res) => {
   res.render('dashboard/pemohon/pengajuan-baru', {
@@ -42,29 +54,18 @@ router.get('/baru', isAuthenticated, isRole(['pemohon']), (req, res) => {
   });
 });
 
-// ── STEP 2 ──────────────────────────────────────────
-// GET — tampilkan halaman konfirmasi (preview form persetujuan Kaprodi)
+// GET — tampilkan halaman konfirmasi (redirect ke SPA)
 router.get('/baru/konfirmasi', isAuthenticated, isRole(['pemohon']), (req, res) => {
-  res.render('dashboard/pemohon/pengajuan_baru_konfirmasi', {
-    title: 'Konfirmasi Pendaftaran Sidang',
-    user: req.session.user,
-    currentPath: req.originalUrl
-  });
+  res.redirect('/dashboard/pemohon/pengajuan/baru');
 });
 
-// ── STEP 3 ──────────────────────────────────────────
-// GET — tampilkan halaman detail (ringkasan semua data + upload file)
+// GET — tampilkan halaman detail (redirect ke SPA)
 router.get('/baru/detail', isAuthenticated, isRole(['pemohon']), (req, res) => {
-  res.render('dashboard/pemohon/pengajuan_baru_detail', {
-    title: 'Detail Pendaftaran Sidang',
-    user: req.session.user,
-    currentPath: req.originalUrl
-  });
+  res.redirect('/dashboard/pemohon/pengajuan/baru');
 });
 
-// POST — proses submit form (final, dari halaman detail)
+// POST — proses submit form ke Backend API
 router.post('/baru/detail', isAuthenticated, isRole(['pemohon']), upload.fields([
-  { name: 'file_form_ttd', maxCount: 1 },
   { name: 'file_draft_karya_akhir', maxCount: 1 }
 ]), async (req, res) => {
   try {
@@ -76,12 +77,13 @@ router.post('/baru/detail', isAuthenticated, isRole(['pemohon']), upload.fields(
       alamat,
       no_hp,
       email,
-      judul_karya_akhir
+      judul_karya_akhir,
+      ttd_pemohon
     } = req.body;
 
     // Validasi
     if (!jenis_sidang || !nama || !nim || !program_studi || !alamat || !no_hp || !email || !judul_karya_akhir) {
-      return res.render('dashboard/pemohon/pengajuan_baru_detail', {
+      return res.render('dashboard/pemohon/pengajuan-baru', {
         title: 'Detail Pendaftaran Sidang',
         user: req.session.user,
         currentPath: req.originalUrl,
@@ -89,35 +91,46 @@ router.post('/baru/detail', isAuthenticated, isRole(['pemohon']), upload.fields(
       });
     }
 
-    const fileFormTtd = req.files?.file_form_ttd?.[0];
     const fileDraftKaryaAkhir = req.files?.file_draft_karya_akhir?.[0];
 
-    if (!fileFormTtd || !fileDraftKaryaAkhir) {
-      return res.render('dashboard/pemohon/pengajuan_baru_detail', {
+    if (!fileDraftKaryaAkhir) {
+      return res.render('dashboard/pemohon/pengajuan-baru', {
         title: 'Detail Pendaftaran Sidang',
         user: req.session.user,
         currentPath: req.originalUrl,
-        error_msg: 'Form bertanda tangan dan draft Karya Akhir wajib diunggah.'
+        error_msg: 'Draft Karya Akhir wajib diunggah.'
       });
     }
 
-    // TODO: simpan ke database
-    console.log('✅ Pengajuan berhasil:');
-    console.log('  - Jenis Sidang:', jenis_sidang);
-    console.log('  - Nama:', nama);
-    console.log('  - NIM:', nim);
-    console.log('  - File Form TTD:', fileFormTtd.filename);
-    console.log('  - File Draft:', fileDraftKaryaAkhir.filename);
+    // Buat FormData untuk dikirim ke Backend API
+    const formData = new FormData();
+    formData.append('jenis_sidang', jenis_sidang);
+    formData.append('nama', nama);
+    formData.append('nim', nim);
+    formData.append('program_studi', program_studi);
+    formData.append('alamat', alamat);
+    formData.append('no_hp', no_hp);
+    formData.append('email', email);
+    formData.append('judul_karya_akhir', judul_karya_akhir);
+    if (ttd_pemohon) formData.append('ttd_pemohon', ttd_pemohon);
+
+    formData.append('file_draft_karya_akhir', fs.createReadStream(fileDraftKaryaAkhir.path));
+
+    // Post ke Backend
+    await axios.post(`${BACKEND_URL}/proposal`, formData, getAxiosConfig(req, formData.getHeaders()));
+
+    // Hapus file sementara di frontend secara asynchronous
+    fs.unlink(fileDraftKaryaAkhir.path, () => {});
 
     req.flash('success_msg', 'Pengajuan sidang berhasil dikirim!');
     return res.redirect('/dashboard/pemohon/data-management?success=1');
   } catch (err) {
-    console.error('❌ Error:', err);
+    console.error('❌ Error submitting proposal to backend:', err.response?.data || err.message);
     return res.render('dashboard/pemohon/pengajuan_baru_detail', {
       title: 'Detail Pendaftaran Sidang',
       user: req.session.user,
       currentPath: req.originalUrl,
-      error_msg: 'Terjadi kesalahan saat mengirim pengajuan. Silakan coba lagi.'
+      error_msg: err.response?.data?.error || 'Terjadi kesalahan saat mengirim pengajuan. Silakan coba lagi.'
     });
   }
 });

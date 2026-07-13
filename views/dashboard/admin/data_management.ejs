@@ -60,7 +60,7 @@
           </svg>
           <span class="text-xs font-semibold text-gray-700">Ekspor CSV</span>
         </button>
-        <a href="/dashboard/admin/kelola-pengajuan"
+        <a href="/dashboard/admin"
            class="flex items-center gap-2.5 bg-blue-50 hover:bg-blue-100 border border-blue-100 rounded-full pl-2 pr-4 py-1.5 transition-colors shadow-sm">
           <span class="w-6 h-6 rounded-full bg-blue-600 flex items-center justify-center shrink-0">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -70,7 +70,7 @@
               <rect width="7" height="5" x="3" y="16" rx="1"></rect>
             </svg>
           </span>
-          <span class="text-xs font-semibold text-blue-700 whitespace-nowrap">Kelola Pengajuan</span>
+          <span class="text-xs font-semibold text-blue-700 whitespace-nowrap">Dashboard</span>
         </a>
       </div>
     </div>
@@ -125,21 +125,10 @@
               </select>
               <select id="filterProdi" class="w-full sm:w-auto px-3 py-2 border border-gray-300 rounded-lg text-sm text-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500">
                 <option value="">Semua Prodi</option>
+                <option value="Teknik Informatika">Teknik Informatika</option>
+                <option value="Desain Komunikasi Visual">Desain Komunikasi Visual</option>
+                <option value="Desain Produk">Desain Produk</option>
               </select>
-              <select id="filterJenis" class="w-full sm:w-auto px-3 py-2 border border-gray-300 rounded-lg text-sm text-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500">
-                <option value="">Semua Jenis</option>
-                <option value="Seminar Proposal">Seminar Proposal</option>
-                <option value="Kolokium">Kolokium</option>
-                <option value="Sidang Akhir">Sidang Akhir</option>
-              </select>
-              <div class="flex items-center gap-2 w-full sm:w-auto">
-                <input type="date" id="filterDariTanggal" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm text-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500">
-                <span class="text-xs text-gray-400">s/d</span>
-                <input type="date" id="filterSampaiTanggal" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm text-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500">
-              </div>
-              <button type="button" id="btnResetFilter" class="text-xs font-semibold text-gray-500 hover:text-red-600 whitespace-nowrap px-2">
-                Reset Filter
-              </button>
             </div>
             <div class="text-xs text-gray-400 whitespace-nowrap" id="resultCountLabel">Menampilkan 0 data</div>
           </div>
@@ -185,6 +174,82 @@
     </div>
   </div>
 
+  <!-- ══════════ MODAL: SETUJUI & JADWALKAN ══════════ -->
+  <div class="modal-overlay" id="modalSetujui">
+    <div class="modal-box bg-white rounded-2xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+      <div class="px-6 py-4 flex items-center justify-between sticky top-0 z-10" style="background: linear-gradient(135deg, #1e40af 0%, #2563eb 100%);">
+        <div>
+          <span class="text-white font-bold text-sm tracking-wide">EDIT JADWAL SIDANG</span>
+          <p class="text-blue-200 text-xs mt-0.5" id="modalSetujuiSubtitle">Perbarui detail pelaksanaan sidang</p>
+        </div>
+        <button type="button" class="modal-close text-white/80 hover:text-white" data-modal="modalSetujui">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
+      </div>
+
+      <form id="formSetujui" class="px-6 py-6 space-y-5" method="POST">
+        <!-- Tanggal & Jam -->
+        <div>
+          <p class="text-xs font-bold uppercase tracking-wide text-gray-500 mb-2">Jadwal</p>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div>
+              <label class="block text-xs font-medium text-gray-600 mb-1">Tanggal Sidang</label>
+              <input type="date" name="tanggal" required class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-gray-600 mb-1">Jam Mulai</label>
+              <input type="time" name="jam_mulai" required class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-gray-600 mb-1">Jam Selesai</label>
+              <input type="time" name="jam_selesai" required class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+            </div>
+          </div>
+        </div>
+
+        <!-- Teknik Sidang -->
+        <div>
+          <p class="text-xs font-bold uppercase tracking-wide text-gray-500 mb-2">Teknik Sidang</p>
+          <div class="flex gap-3 mb-3">
+            <label class="flex-1 flex items-center gap-2 border border-gray-300 rounded-lg px-3 py-2.5 cursor-pointer has-[:checked]:border-blue-500 has-[:checked]:bg-blue-50 has-[:checked]:ring-1 has-[:checked]:ring-blue-500 transition">
+              <input type="radio" name="teknik" value="offline" checked class="accent-blue-600">
+              <span class="text-sm font-medium text-gray-700">Offline (Tatap Muka)</span>
+            </label>
+            <label class="flex-1 flex items-center gap-2 border border-gray-300 rounded-lg px-3 py-2.5 cursor-pointer has-[:checked]:border-blue-500 has-[:checked]:bg-blue-50 has-[:checked]:ring-1 has-[:checked]:ring-blue-500 transition">
+              <input type="radio" name="teknik" value="online" class="accent-blue-600">
+              <span class="text-sm font-medium text-gray-700">Online (Daring)</span>
+            </label>
+          </div>
+          <div id="fieldOffline">
+            <label class="block text-xs font-medium text-gray-600 mb-1">Ruang Sidang</label>
+            <input type="text" name="ruang" placeholder="Contoh: Ruang Seminar A101" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+          </div>
+          <div id="fieldOnline" class="hidden">
+            <label class="block text-xs font-medium text-gray-600 mb-1">Link Meeting (Zoom / Google Meet)</label>
+            <input type="text" name="link_meeting" placeholder="https://zoom.us/j/..." class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+          </div>
+        </div>
+
+        <!-- Tim Penguji -->
+        <div>
+          <div class="flex items-center justify-between mb-2">
+            <p class="text-xs font-bold uppercase tracking-wide text-gray-500">Tim Penguji</p>
+            <button type="button" id="btnAddPenguji" class="text-xs font-semibold text-blue-600 hover:text-blue-700 flex items-center gap-1">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v16m8-8H4"></path></svg>
+              Tambah Penguji
+            </button>
+          </div>
+          <div id="pengujiList" class="space-y-2"></div>
+        </div>
+
+        <div class="flex justify-end gap-3 pt-2 border-t border-gray-100">
+          <button type="button" class="modal-close px-5 py-2 rounded-lg border border-gray-300 text-gray-600 text-sm font-semibold hover:bg-gray-50 transition" data-modal="modalSetujui">Batal</button>
+          <button type="submit" class="px-5 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold transition shadow-md shadow-blue-200">Simpan Perubahan</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <!-- ══════════ MODAL: DETAIL RIWAYAT ══════════ -->
   <div class="modal-overlay" id="modalDetail">
     <div class="modal-box bg-white rounded-2xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
@@ -212,43 +277,30 @@
     // ditampilkan di halaman riwayat ini — status itu hanya muncul di Kelola Pengajuan.
     // Kalau data dari server juga masih mengandung status 'menunggu', baris
     // `.filter(d => d.status !== 'menunggu')` di bawah akan otomatis menyaringnya.
-    const rawData = [
-      {
-        id: 2, judul: 'Sistem Informasi Geografis untuk Pemetaan Wilayah', mahasiswa: 'Siti Nurhaliza', nim: '2021005',
-        prodi: 'Teknik Informatika', pembimbing: 'Dr. Budi Santoso', jenis: 'Kolokium',
-        diajukan: '2026-06-25', status: 'terjadwal',
-        jadwal: { tanggal: '2026-07-15', jamMulai: '09:00', jamSelesai: '11:00' },
-        penguji: [
-          { nama: 'Dr. Ahmad Fauzi', peran: 'Ketua' },
-          { nama: 'Dr. Budi Santoso', peran: 'Anggota' },
-          { nama: 'Dr. Citra Dewi', peran: 'Anggota' }
-        ],
-        teknik: 'online', detailTeknik: 'zoom.us/meeting/123456789', alasanTolak: null
-      },
-      {
-        id: 3, judul: 'Analisis Data Penjualan Menggunakan Machine Learning', mahasiswa: 'Muhammad Fajar', nim: '2021012',
-        prodi: 'Teknik Informatika', pembimbing: 'Dr. Eko Prasetyo', jenis: 'Seminar Proposal',
-        diajukan: '2026-06-10', status: 'selesai',
-        jadwal: { tanggal: '2026-07-12', jamMulai: '13:00', jamSelesai: '15:00' },
-        penguji: [
-          { nama: 'Dr. Eko Prasetyo', peran: 'Ketua' },
-          { nama: 'Dr. Fitriani', peran: 'Anggota' }
-        ],
-        teknik: 'online', detailTeknik: 'Zoom', alasanTolak: null
-      },
-      {
-        id: 4, judul: 'Sistem Keamanan Jaringan Menggunakan AI', mahasiswa: 'Dewi Lestari', nim: '2021020',
-        prodi: 'Teknik Informatika', pembimbing: 'Dr. Fitriani', jenis: 'Kolokium',
-        diajukan: '2026-07-05', status: 'ditolak', jadwal: null, penguji: [], teknik: null, detailTeknik: null,
-        alasanTolak: 'Draft karya akhir perlu direvisi dan disetujui ulang oleh dosen pembimbing.'
-      },
-      // Contoh: kalaupun ada data 'menunggu' ikut terkirim dari server, tidak akan tampil di riwayat
-      {
-        id: 1, judul: 'Sistem Informasi Akademik Berbasis Web', mahasiswa: 'Rizky Ananda Putra', nim: '2021001',
-        prodi: 'Teknik Informatika', pembimbing: 'Dr. Ahmad Fauzi', jenis: 'Seminar Proposal',
-        diajukan: '2026-07-01', status: 'menunggu', jadwal: null, penguji: [], teknik: null, detailTeknik: null, alasanTolak: null
-      }
-    ];
+    const rawData = <%- JSON.stringify(allList.map(p => {
+      let cardStatus = p.statusAdmin;
+      if (p.statusKaprodi === 'ditolak') cardStatus = 'ditolak';
+      return {
+        id: p._id,
+        judul: p.judul_karya_akhir || '-',
+        mahasiswa: p.nama || (p.pemohonId ? p.pemohonId.name : '-'),
+        nim: p.nim || (p.pemohonId && p.pemohonId.profile ? p.pemohonId.profile.nim : (p.pemohonId && p.pemohonId.nim ? p.pemohonId.nim : '-')),
+        prodi: p.program_studi || (p.pemohonId && p.pemohonId.profile ? p.pemohonId.profile.programStudi : (p.pemohonId && p.pemohonId.programStudi ? p.pemohonId.programStudi : '-')),
+        pembimbing: p.dosenPembimbingId ? p.dosenPembimbingId.name : (p.dosenPembimbing || '-'),
+        jenis: p.jenis_karya || 'Proposal',
+        diajukan: p.tanggalDiajukan ? p.tanggalDiajukan.substring(0,10) : '-',
+        status: cardStatus,
+        jadwal: p.jadwal && p.jadwal.tanggal ? {
+          tanggal: p.jadwal.tanggal.substring(0,10),
+          jamMulai: p.jadwal.jamMulai,
+          jamSelesai: p.jadwal.jamSelesai
+        } : null,
+        penguji: p.jadwal ? p.jadwal.penguji : [],
+        teknik: p.jadwal ? p.jadwal.teknik : null,
+        detailTeknik: p.jadwal && p.jadwal.teknik === 'online' ? p.jadwal.linkMeeting : (p.jadwal ? p.jadwal.ruang : null),
+        alasanTolak: p.alasanTolak || p.alasanTolakKaprodi || null
+      };
+    })) %>;
 
     // Riwayat hanya menampilkan pengajuan yang statusnya sudah final/terproses
     const riwayatData = rawData.filter(d => d.status !== 'menunggu');
@@ -280,12 +332,12 @@
     }
 
     function getFiltered() {
-      const q = document.getElementById('searchInput').value.trim().toLowerCase();
-      const st = document.getElementById('filterStatus').value;
-      const pr = document.getElementById('filterProdi').value;
-      const jn = document.getElementById('filterJenis').value;
-      const dari = document.getElementById('filterDariTanggal').value;
-      const sampai = document.getElementById('filterSampaiTanggal').value;
+      const q = document.getElementById('searchInput')?.value.trim().toLowerCase() || '';
+      const st = document.getElementById('filterStatus')?.value || '';
+      const pr = document.getElementById('filterProdi')?.value || '';
+      const jn = document.getElementById('filterJenis')?.value || '';
+      const dari = document.getElementById('filterDariTanggal')?.value || '';
+      const sampai = document.getElementById('filterSampaiTanggal')?.value || '';
 
       let rows = riwayatData.filter(d => {
         const matchQ = !q || d.judul.toLowerCase().includes(q) || d.mahasiswa.toLowerCase().includes(q) || d.nim.toLowerCase().includes(q);
@@ -348,6 +400,29 @@
             jadwalCell = '<span class="text-red-400 text-xs italic">Ditolak</span>';
           }
 
+          let isJadwalExpired = false;
+          if ((d.status === 'terjadwal' || d.status === 'selesai') && d.jadwal && d.jadwal.tanggal && d.jadwal.jamSelesai) {
+            const jDate = new Date(d.jadwal.tanggal);
+            const parts = d.jadwal.jamSelesai.split(':');
+            if (parts.length >= 2) {
+              jDate.setHours(parseInt(parts[0], 10), parseInt(parts[1], 10), 0, 0);
+              if (new Date() > jDate) isJadwalExpired = true;
+            }
+          }
+
+          let aksiBtn = `
+            <div class="flex flex-col items-center gap-1.5">
+              <button type="button" class="btn-detail text-xs font-semibold text-blue-600 hover:text-blue-700 hover:underline" data-id="${d.id}">
+                Lihat Detail
+              </button>
+              ${(d.status === 'terjadwal' || d.status === 'selesai') && !isJadwalExpired ? `
+                <button type="button" class="btn-edit-jadwal px-3 py-1 bg-white hover:bg-blue-50 border border-blue-200 rounded-lg text-[11px] font-semibold text-blue-700 transition flex items-center justify-center gap-1 w-full" data-id="${d.id}" data-jadwal="${encodeURIComponent(JSON.stringify(d.jadwal || {}))}" data-judul="${encodeURIComponent(d.judul)}">
+                  Edit Jadwal
+                </button>
+              ` : ''}
+            </div>
+          `;
+
           return `
             <tr class="row-hover" data-id="${d.id}">
               <td class="px-4 py-3.5 text-gray-400 text-xs align-top">${start + i + 1}</td>
@@ -364,9 +439,7 @@
                 <span class="status-badge ${meta.cls}">${meta.icon} ${meta.label}</span>
               </td>
               <td class="px-4 py-3.5 align-top text-center">
-                <button type="button" class="btn-detail text-xs font-semibold text-blue-600 hover:text-blue-700 hover:underline" data-id="${d.id}">
-                  Lihat Detail
-                </button>
+                ${aksiBtn}
               </td>
             </tr>
           `;
@@ -399,8 +472,85 @@
 
     function attachRowEvents() {
       document.querySelectorAll('.btn-detail').forEach(btn => {
-        btn.addEventListener('click', () => openDetail(Number(btn.dataset.id)));
+        btn.addEventListener('click', () => openDetail(btn.dataset.id));
       });
+      document.querySelectorAll('.btn-edit-jadwal').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const proposalId = btn.getAttribute('data-id');
+          document.getElementById('formSetujui').action = '/dashboard/admin/kelola-pengajuan/' + proposalId + '/jadwalkan';
+          const judul = decodeURIComponent(btn.getAttribute('data-judul') || '');
+          document.getElementById('modalSetujuiSubtitle').textContent = judul;
+          
+          const jadwalRaw = btn.getAttribute('data-jadwal');
+          if (jadwalRaw) {
+            try {
+              const jadwal = JSON.parse(decodeURIComponent(jadwalRaw));
+              if (jadwal.tanggal) document.querySelector('#formSetujui input[name="tanggal"]').value = jadwal.tanggal.split('T')[0];
+              if (jadwal.jamMulai) document.querySelector('#formSetujui input[name="jam_mulai"]').value = jadwal.jamMulai;
+              if (jadwal.jamSelesai) document.querySelector('#formSetujui input[name="jam_selesai"]').value = jadwal.jamSelesai;
+              
+              if (jadwal.teknik) {
+                const rdo = document.querySelector(`#formSetujui input[name="teknik"][value="${jadwal.teknik}"]`);
+                if (rdo) { rdo.checked = true; rdo.dispatchEvent(new Event('change')); }
+              }
+              if (jadwal.ruang) document.querySelector('#formSetujui input[name="ruang"]').value = jadwal.ruang;
+              if (jadwal.linkMeeting) document.querySelector('#formSetujui input[name="link_meeting"]').value = jadwal.linkMeeting;
+              
+              if (jadwal.penguji && jadwal.penguji.length > 0) {
+                pengujiList.innerHTML = '';
+                jadwal.penguji.forEach(penguji => addPengujiRow(penguji.nama, penguji.peran));
+              } else {
+                resetPengujiDefault();
+              }
+            } catch(e) { console.error(e); resetPengujiDefault(); }
+          }
+          
+          openModal('modalSetujui');
+        });
+      });
+    }
+
+    // ── Toggle field offline/online ──
+    document.querySelectorAll('input[name="teknik"]').forEach(radio => {
+      radio.addEventListener('change', () => {
+        const isOnline = document.querySelector('input[name="teknik"]:checked').value === 'online';
+        document.getElementById('fieldOffline').classList.toggle('hidden', isOnline);
+        document.getElementById('fieldOnline').classList.toggle('hidden', !isOnline);
+      });
+    });
+
+    // ── Tim Penguji dinamis ──
+    const pengujiList = document.getElementById('pengujiList');
+    let pengujiCount = 0;
+
+    function addPengujiRow(nama = '', peran = 'Anggota') {
+      pengujiCount++;
+      const row = document.createElement('div');
+      row.className = 'flex items-center gap-2';
+      row.innerHTML = `
+        <input type="text" name="penguji_nama[]" value="${nama}" placeholder="Nama dosen penguji" required
+          class="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+        <select name="penguji_peran[]" class="border border-gray-300 rounded-lg px-2 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+          <option value="Ketua" ${peran === 'Ketua' ? 'selected' : ''}>Ketua</option>
+          <option value="Anggota" ${peran === 'Anggota' ? 'selected' : ''}>Anggota</option>
+        </select>
+        <button type="button" class="remove-penguji shrink-0 w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 hover:text-red-500 hover:bg-red-50 transition">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
+      `;
+      row.querySelector('.remove-penguji').addEventListener('click', () => row.remove());
+      pengujiList.appendChild(row);
+    }
+
+    if(document.getElementById('btnAddPenguji')){
+      document.getElementById('btnAddPenguji').addEventListener('click', () => addPengujiRow());
+    }
+
+    function resetPengujiDefault() {
+      if(!pengujiList) return;
+      pengujiList.innerHTML = '';
+      addPengujiRow('', 'Ketua');
+      addPengujiRow('', 'Anggota');
     }
 
     function openDetail(id) {
@@ -480,15 +630,16 @@
 
     // Filter events
     ['searchInput', 'filterStatus', 'filterProdi', 'filterJenis', 'filterDariTanggal', 'filterSampaiTanggal'].forEach(id => {
-      document.getElementById(id).addEventListener('input', () => { currentPage = 1; renderTable(); });
+      const el = document.getElementById(id);
+      if (el) {
+        el.addEventListener('input', () => { currentPage = 1; renderTable(); });
+      }
     });
-    document.getElementById('btnResetFilter').addEventListener('click', () => {
-      document.getElementById('searchInput').value = '';
-      document.getElementById('filterStatus').value = '';
-      document.getElementById('filterProdi').value = '';
-      document.getElementById('filterJenis').value = '';
-      document.getElementById('filterDariTanggal').value = '';
-      document.getElementById('filterSampaiTanggal').value = '';
+    document.getElementById('btnResetFilter')?.addEventListener('click', () => {
+      ['searchInput', 'filterStatus', 'filterProdi', 'filterJenis', 'filterDariTanggal', 'filterSampaiTanggal'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.value = '';
+      });
       currentPage = 1;
       renderTable();
     });

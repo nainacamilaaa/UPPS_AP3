@@ -32,7 +32,7 @@
 </head>
 <body class="bg-gray-100">
 
-  <%- include('../../partials/sidebar', { user: locals.user, currentPath: locals.currentPath }) %>
+  <%- include('../../partials/sidebar_kaprodi', { user: locals.user, currentPath: locals.currentPath }) %>
 
   <div class="min-h-screen">
 
@@ -138,12 +138,14 @@
                 <p class="text-sm font-bold text-gray-800">Lampiran Dokumen</p>
               </div>
               <div class="flex flex-wrap gap-2">
-                <% (pengajuan.lampiran || []).forEach(f => { %>
-                  <a href="<%= f.url %>" target="_blank" class="flex items-center gap-2 text-xs font-medium text-gray-600 bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-lg px-3 py-1.5 transition">
+                <% if (pengajuan.file_draft_karya_akhir) { %>
+                  <a href="<%= backendBaseUrl %>/<%= pengajuan.file_draft_karya_akhir.replace(/\\/g, '/') %>" target="_blank" class="flex items-center gap-2 text-xs font-medium text-gray-600 bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-lg px-3 py-1.5 transition">
                     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
-                    <%= f.nama %>
+                    Draft Karya Akhir
                   </a>
-                <% }) %>
+                <% } else { %>
+                  <p class="text-xs text-gray-400">Belum ada lampiran.</p>
+                <% } %>
               </div>
             </div>
 
@@ -205,7 +207,7 @@
                   <div class="grid grid-cols-1 md:grid-cols-3 gap-3 p-4" style="background:#f8fafc;">
                     <div class="bg-white rounded-lg p-3 border border-gray-200">
                       <p class="text-[11px] font-bold uppercase tracking-wide text-gray-500 mb-1.5">Jadwal Sidang</p>
-                      <p class="text-sm text-gray-800"><%= j.tanggal %></p>
+                      <p class="text-sm text-gray-800"><%= j.tanggal ? new Date(j.tanggal).toLocaleDateString('id-ID', {weekday:'long', day:'numeric', month:'long', year:'numeric'}) : '-' %></p>
                       <p class="text-sm text-gray-800"><%= j.jamMulai %>–<%= j.jamSelesai %> WIB</p>
                     </div>
                     <div class="bg-white rounded-lg p-3 border border-gray-200">
@@ -274,7 +276,7 @@
         </button>
       </div>
 
-      <form id="formSetujui" action="/dashboard/kaprodi/persetujuan/<%= pengajuan.id %>/setujui" method="POST" class="px-6 py-6 space-y-4">
+      <form id="formSetujui" action="/dashboard/kaprodi/persetujuan/<%= pengajuan._id %>/setujui" method="POST" class="px-6 py-6 space-y-4">
         <div>
           <div class="flex items-center justify-between mb-2">
             <label class="text-xs font-medium text-gray-600">Tanda Tangan Kaprodi <span class="text-red-500">*</span></label>
@@ -315,7 +317,7 @@
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
         </button>
       </div>
-      <form action="/dashboard/kaprodi/persetujuan/<%= pengajuan.id %>/tolak" method="POST" class="px-6 py-6 space-y-4">
+      <form action="/dashboard/kaprodi/persetujuan/<%= pengajuan._id %>/tolak" method="POST" class="px-6 py-6 space-y-4">
         <div>
           <label class="block text-xs font-medium text-gray-600 mb-1.5">Alasan Penolakan <span class="text-red-500">*</span></label>
           <textarea name="alasan" rows="4" required placeholder="Contoh: Judul karya akhir belum sesuai dengan topik yang disetujui program studi."

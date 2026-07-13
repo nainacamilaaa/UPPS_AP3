@@ -12,6 +12,8 @@
       touch-action: none;
       cursor: crosshair;
     }
+    .step-content { display: none; }
+    .step-content.active { display: block; }
   </style>
 </head>
 <body class="bg-gray-100">
@@ -19,7 +21,6 @@
   <%- include('../../partials/sidebar', { user: locals.user, currentPath: locals.currentPath }) %>
 
   <div class="min-h-screen">
-
     <!-- ─── TOP BAR ─── -->
     <div class="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between" style="padding-left: 64px;">
       <div class="flex items-center gap-3 pl-8">
@@ -37,29 +38,28 @@
       <div class="flex items-center gap-0">
         <div class="flex items-center">
           <div class="flex items-center gap-2 px-3">
-            <div class="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0 bg-blue-600 text-white">1</div>
-            <span class="text-xs font-medium text-blue-600">Data Pendaftaran</span>
+            <div id="ind1-circle" class="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0 bg-blue-600 text-white">1</div>
+            <span id="ind1-text" class="text-xs font-medium text-blue-600">Data Pendaftaran</span>
           </div>
-          <div class="w-8 h-px bg-gray-200"></div>
+          <div id="ind1-line" class="w-8 h-px bg-gray-200"></div>
         </div>
         <div class="flex items-center">
           <div class="flex items-center gap-2 px-3">
-            <div class="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0 bg-gray-100 text-gray-400">2</div>
-            <span class="text-xs font-medium text-gray-400">Konfirmasi</span>
+            <div id="ind2-circle" class="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0 bg-gray-100 text-gray-400">2</div>
+            <span id="ind2-text" class="text-xs font-medium text-gray-400">Konfirmasi</span>
           </div>
-          <div class="w-8 h-px bg-gray-200"></div>
+          <div id="ind2-line" class="w-8 h-px bg-gray-200"></div>
         </div>
         <div class="flex items-center">
           <div class="flex items-center gap-2 px-3">
-            <div class="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0 bg-gray-100 text-gray-400">3</div>
-            <span class="text-xs font-medium text-gray-400">Detail &amp; Kirim</span>
+            <div id="ind3-circle" class="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0 bg-gray-100 text-gray-400">3</div>
+            <span id="ind3-text" class="text-xs font-medium text-gray-400">Detail &amp; Kirim</span>
           </div>
         </div>
       </div>
     </div>
 
     <div class="px-6 py-8" style="padding-left: 64px;">
-
       <!-- Alerts -->
       <% if (locals.success_msg && success_msg.length > 0) { %>
         <p class="text-green-600 text-sm bg-green-50 border border-green-200 rounded-lg px-4 py-3 mb-4">
@@ -72,236 +72,232 @@
         </p>
       <% } %>
 
-      <form id="pengajuanForm" class="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
-
-        <!-- Header kop surat -->
-        <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between"
-          style="background: linear-gradient(135deg, #1e40af 0%, #2563eb 100%);">
-          <div>
-            <span class="text-white font-bold text-sm tracking-wide">FORMULIR PENDAFTARAN SIDANG</span>
-            <p class="text-blue-200 text-xs mt-0.5">Fakultas Ilmu Rekayasa &middot; Universitas Paramadina</p>
-          </div>
-          <span class="text-xs bg-white/20 text-white px-3 py-1 rounded-full font-medium whitespace-nowrap">
-            Sidang Seminar Proposal / Kolokium
-          </span>
-        </div>
-
-        <div class="px-8 py-6 space-y-5">
-
-          <p class="text-sm text-gray-600 italic -mb-1">Form Pendaftaran: (diisi oleh mahasiswa)</p>
-          <p class="text-sm text-gray-700 mb-1">Yang bertanda tangan di bawah ini:</p>
-
-          <!-- Nama -->
-          <div class="flex items-start gap-4">
-            <label for="nama" class="w-64 text-sm text-gray-700 shrink-0 font-medium pt-2">
-              Nama <span class="text-red-500">*</span>
-            </label>
-            <span class="text-gray-400 shrink-0 pt-2">:</span>
-            <div class="flex-1">
-              <input type="text" id="nama" name="nama" required
-                value="<%= locals.user ? user.name : '' %>"
-                class="w-full border border-gray-300 rounded px-3 py-2 text-sm text-gray-600 focus:outline-none focus:ring-1 focus:ring-blue-400 bg-white">
+      <form id="pengajuanForm" action="/dashboard/pemohon/pengajuan/baru/detail" method="POST" enctype="multipart/form-data" class="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
+        
+        <!-- =================== STEP 1: DATA PENDAFTARAN =================== -->
+        <div id="step1" class="step-content active">
+          <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between"
+            style="background: linear-gradient(135deg, #1e40af 0%, #2563eb 100%);">
+            <div>
+              <span class="text-white font-bold text-sm tracking-wide">FORMULIR PENDAFTARAN SIDANG</span>
+              <p class="text-blue-200 text-xs mt-0.5">Fakultas Ilmu Rekayasa &middot; Universitas Paramadina</p>
             </div>
+            <span class="text-xs bg-white/20 text-white px-3 py-1 rounded-full font-medium whitespace-nowrap">
+              Sidang Seminar Proposal / Kolokium
+            </span>
           </div>
 
-          <!-- NIM -->
-          <div class="flex items-start gap-4">
-            <label for="nim" class="w-64 text-sm text-gray-700 shrink-0 font-medium pt-2">
-              NIM <span class="text-red-500">*</span>
-            </label>
-            <span class="text-gray-400 shrink-0 pt-2">:</span>
-            <div class="flex-1">
-              <input type="text" id="nim" name="nim" required inputmode="numeric"
-                class="w-full border border-gray-300 rounded px-3 py-2 text-sm text-gray-600 focus:outline-none focus:ring-1 focus:ring-blue-400 bg-white">
-            </div>
-          </div>
+          <div class="px-8 py-6 space-y-5">
+            <p class="text-sm text-gray-600 italic -mb-1">Form Pendaftaran: (diisi oleh mahasiswa)</p>
+            <p class="text-sm text-gray-700 mb-1">Yang bertanda tangan di bawah ini:</p>
 
-          <!-- Program Studi -->
-          <div class="flex items-start gap-4">
-            <label for="program_studi" class="w-64 text-sm text-gray-700 shrink-0 font-medium pt-2">
-              Program Studi <span class="text-red-500">*</span>
-            </label>
-            <span class="text-gray-400 shrink-0 pt-2">:</span>
-            <div class="flex-1">
-              <select id="program_studi" name="program_studi" required
-                class="w-full border border-gray-300 rounded px-3 py-2 text-sm text-gray-600 focus:outline-none focus:ring-1 focus:ring-blue-400 bg-white">
-                <option value="" disabled selected>Pilih Program Studi</option>
-                <option value="Teknik Informatika">Teknik Informatika</option>
-                <option value="Desain Produk">Desain Produk</option>
-                <option value="Desain Komunikasi Visual">Desain Komunikasi Visual</option>
-              </select>
-            </div>
-          </div>
-
-          <!-- Jenis Sidang -->
-          <div class="flex items-start gap-4">
-            <label class="w-64 text-sm text-gray-700 shrink-0 font-medium pt-2">
-              Jenis Sidang <span class="text-red-500">*</span>
-            </label>
-            <span class="text-gray-400 shrink-0 pt-2">:</span>
-            <div class="flex-1 flex flex-col sm:flex-row gap-3 pt-2">
-              <label class="flex items-center gap-2 text-sm text-gray-700">
-                <input type="radio" name="jenis_sidang" id="jenis_seminar_proposal" value="seminar_proposal" required class="text-blue-600 focus:ring-blue-500">
-                Sidang Seminar Proposal
-              </label>
-              <label class="flex items-center gap-2 text-sm text-gray-700">
-                <input type="radio" name="jenis_sidang" id="jenis_kolokium" value="kolokium" required class="text-blue-600 focus:ring-blue-500">
-                Sidang Kolokium
-              </label>
-            </div>
-          </div>
-
-          <!-- Alamat -->
-          <div class="flex items-start gap-4">
-            <label for="alamat" class="w-64 text-sm text-gray-700 shrink-0 font-medium pt-2">
-              Alamat <span class="text-red-500">*</span>
-            </label>
-            <span class="text-gray-400 shrink-0 pt-2">:</span>
-            <div class="flex-1">
-              <textarea id="alamat" name="alamat" rows="2" required
-                class="w-full border border-gray-300 rounded px-3 py-2 text-sm text-gray-600 focus:outline-none focus:ring-1 focus:ring-blue-400 bg-white resize-none"></textarea>
-            </div>
-          </div>
-
-          <!-- No. HP -->
-          <div class="flex items-start gap-4">
-            <label for="no_hp" class="w-64 text-sm text-gray-700 shrink-0 font-medium pt-2">
-              No. HP <span class="text-red-500">*</span>
-            </label>
-            <span class="text-gray-400 shrink-0 pt-2">:</span>
-            <div class="flex-1">
-              <input type="tel" id="no_hp" name="no_hp" required
-                inputmode="numeric" pattern="[0-9]*" maxlength="15"
-                placeholder="Contoh: 081234567890"
-                class="w-full border border-gray-300 rounded px-3 py-2 text-sm text-gray-600 focus:outline-none focus:ring-1 focus:ring-blue-400 bg-white">
-              <p id="noHpError" class="hidden text-red-500 text-xs mt-1">No. HP hanya boleh berisi angka.</p>
-            </div>
-          </div>
-
-          <!-- Email -->
-          <div class="flex items-start gap-4">
-            <label for="email" class="w-64 text-sm text-gray-700 shrink-0 font-medium pt-2">
-              Email <span class="text-red-500">*</span>
-            </label>
-            <span class="text-gray-400 shrink-0 pt-2">:</span>
-            <div class="flex-1">
-              <input type="email" id="email" name="email" required
-                class="w-full border border-gray-300 rounded px-3 py-2 text-sm text-gray-600 focus:outline-none focus:ring-1 focus:ring-blue-400 bg-white">
-            </div>
-          </div>
-
-          <!-- Judul Karya Akhir -->
-          <div class="flex items-start gap-4">
-            <label for="judul_karya_akhir" class="w-64 text-sm text-gray-700 shrink-0 font-medium pt-2">
-              Judul Karya Akhir <span class="text-red-500">*</span>
-            </label>
-            <span class="text-gray-400 shrink-0 pt-2">:</span>
-            <div class="flex-1">
-              <textarea id="judul_karya_akhir" name="judul_karya_akhir" rows="3" required
-                class="w-full border border-gray-300 rounded px-3 py-2 text-sm text-gray-600 focus:outline-none focus:ring-1 focus:ring-blue-400 bg-white resize-none"></textarea>
-            </div>
-          </div>
-
-          <div class="border-t border-gray-100 pt-5 space-y-5">
-            <!-- Upload Draft Karya Akhir -->
             <div class="flex items-start gap-4">
-              <label for="file_draft_karya_akhir" class="w-64 text-sm text-gray-700 shrink-0 font-medium pt-2">
-                Draft Softfile Karya Akhir <span class="text-red-500">*</span>
-              </label>
+              <label for="nama" class="w-64 text-sm text-gray-700 shrink-0 font-medium pt-2">Nama <span class="text-red-500">*</span></label>
+              <span class="text-gray-400 shrink-0 pt-2">:</span>
+              <div class="flex-1"><input type="text" id="nama" name="nama" required value="<%= locals.user ? user.name : '' %>" class="w-full border border-gray-300 rounded px-3 py-2 text-sm text-gray-600 focus:outline-none focus:ring-1 focus:ring-blue-400 bg-white"></div>
+            </div>
+
+            <div class="flex items-start gap-4">
+              <label for="nim" class="w-64 text-sm text-gray-700 shrink-0 font-medium pt-2">NIM <span class="text-red-500">*</span></label>
+              <span class="text-gray-400 shrink-0 pt-2">:</span>
+              <div class="flex-1"><input type="text" id="nim" name="nim" required inputmode="numeric" class="w-full border border-gray-300 rounded px-3 py-2 text-sm text-gray-600 focus:outline-none focus:ring-1 focus:ring-blue-400 bg-white"></div>
+            </div>
+
+            <div class="flex items-start gap-4">
+              <label for="program_studi" class="w-64 text-sm text-gray-700 shrink-0 font-medium pt-2">Program Studi <span class="text-red-500">*</span></label>
               <span class="text-gray-400 shrink-0 pt-2">:</span>
               <div class="flex-1">
-                <input type="file" id="file_draft_karya_akhir" name="file_draft_karya_akhir" accept="application/pdf" required
-                  class="w-full text-sm text-gray-600 border border-gray-300 rounded px-3 py-2 file:mr-4 file:py-1 file:px-3 file:rounded file:border-0 file:text-xs file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 transition bg-white">
-                <p class="text-xs text-gray-400 mt-1">Draft yang telah disetujui Dosen Pembimbing Karya Akhir. Format PDF, maks 10MB.</p>
+                <select id="program_studi" name="program_studi" required class="w-full border border-gray-300 rounded px-3 py-2 text-sm text-gray-600 focus:outline-none focus:ring-1 focus:ring-blue-400 bg-white">
+                  <option value="" disabled selected>Pilih Program Studi</option>
+                  <option value="Teknik Informatika">Teknik Informatika</option>
+                  <option value="Desain Produk">Desain Produk</option>
+                  <option value="Desain Komunikasi Visual">Desain Komunikasi Visual</option>
+                </select>
               </div>
             </div>
 
-            <!-- Tanda Tangan (E-sign, canvas) -->
             <div class="flex items-start gap-4">
-              <label class="w-64 text-sm text-gray-700 shrink-0 font-medium pt-2">
-                Tanda Tangan Pemohon (E-sign) <span class="text-red-500">*</span>
-              </label>
+              <label class="w-64 text-sm text-gray-700 shrink-0 font-medium pt-2">Jenis Sidang <span class="text-red-500">*</span></label>
+              <span class="text-gray-400 shrink-0 pt-2">:</span>
+              <div class="flex-1 flex flex-col sm:flex-row gap-3 pt-2">
+                <label class="flex items-center gap-2 text-sm text-gray-700"><input type="radio" name="jenis_sidang" id="jenis_seminar_proposal" value="seminar_proposal" required class="text-blue-600 focus:ring-blue-500"> Sidang Seminar Proposal</label>
+                <label class="flex items-center gap-2 text-sm text-gray-700"><input type="radio" name="jenis_sidang" id="jenis_kolokium" value="kolokium" required class="text-blue-600 focus:ring-blue-500"> Sidang Kolokium</label>
+              </div>
+            </div>
+
+            <div class="flex items-start gap-4">
+              <label for="alamat" class="w-64 text-sm text-gray-700 shrink-0 font-medium pt-2">Alamat <span class="text-red-500">*</span></label>
+              <span class="text-gray-400 shrink-0 pt-2">:</span>
+              <div class="flex-1"><textarea id="alamat" name="alamat" rows="2" required class="w-full border border-gray-300 rounded px-3 py-2 text-sm text-gray-600 focus:outline-none focus:ring-1 focus:ring-blue-400 bg-white resize-none"></textarea></div>
+            </div>
+
+            <div class="flex items-start gap-4">
+              <label for="no_hp" class="w-64 text-sm text-gray-700 shrink-0 font-medium pt-2">No. HP <span class="text-red-500">*</span></label>
               <span class="text-gray-400 shrink-0 pt-2">:</span>
               <div class="flex-1">
-                <div class="border border-gray-300 rounded-lg overflow-hidden bg-white">
-                  <canvas id="signatureCanvas" class="w-full block bg-white" height="50"></canvas>
+                <input type="tel" id="no_hp" name="no_hp" required inputmode="numeric" pattern="[0-9]*" maxlength="15" placeholder="Contoh: 081234567890" class="w-full border border-gray-300 rounded px-3 py-2 text-sm text-gray-600 focus:outline-none focus:ring-1 focus:ring-blue-400 bg-white">
+                <p id="noHpError" class="hidden text-red-500 text-xs mt-1">No. HP hanya boleh berisi angka.</p>
+              </div>
+            </div>
+
+            <div class="flex items-start gap-4">
+              <label for="email" class="w-64 text-sm text-gray-700 shrink-0 font-medium pt-2">Email <span class="text-red-500">*</span></label>
+              <span class="text-gray-400 shrink-0 pt-2">:</span>
+              <div class="flex-1"><input type="email" id="email" name="email" required class="w-full border border-gray-300 rounded px-3 py-2 text-sm text-gray-600 focus:outline-none focus:ring-1 focus:ring-blue-400 bg-white"></div>
+            </div>
+
+            <div class="flex items-start gap-4">
+              <label for="judul_karya_akhir" class="w-64 text-sm text-gray-700 shrink-0 font-medium pt-2">Judul Karya Akhir <span class="text-red-500">*</span></label>
+              <span class="text-gray-400 shrink-0 pt-2">:</span>
+              <div class="flex-1"><textarea id="judul_karya_akhir" name="judul_karya_akhir" rows="3" required class="w-full border border-gray-300 rounded px-3 py-2 text-sm text-gray-600 focus:outline-none focus:ring-1 focus:ring-blue-400 bg-white resize-none"></textarea></div>
+            </div>
+
+            <div class="border-t border-gray-100 pt-5 space-y-5">
+              <!-- Upload Draft Karya Akhir -->
+              <div class="flex items-start gap-4">
+                <label for="file_draft_karya_akhir" class="w-64 text-sm text-gray-700 shrink-0 font-medium pt-2">
+                  Draft Softfile Karya Akhir <span class="text-red-500">*</span>
+                </label>
+                <span class="text-gray-400 shrink-0 pt-2">:</span>
+                <div class="flex-1">
+                  <input type="file" id="file_draft_karya_akhir" name="file_draft_karya_akhir" accept="application/pdf" required
+                    class="w-full text-sm text-gray-600 border border-gray-300 rounded px-3 py-2 file:mr-4 file:py-1 file:px-3 file:rounded file:border-0 file:text-xs file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 transition bg-white">
+                  <p class="text-xs text-gray-400 mt-1">Draft yang telah disetujui Dosen Pembimbing Karya Akhir. Format PDF, maks 10MB.</p>
                 </div>
-                <div class="flex items-center justify-between mt-2">
-                  <p class="text-xs text-gray-400">Tanda tangan langsung di area di atas menggunakan mouse / jari (layar sentuh).</p>
-                  <button type="button" id="clearSignatureBtn"
-                    class="shrink-0 ml-3 px-3 py-1.5 rounded text-xs font-medium border border-gray-300 text-gray-600 hover:bg-gray-50 transition">
-                    Hapus &amp; Ulangi
-                  </button>
+              </div>
+
+              <!-- Tanda Tangan -->
+              <div class="flex items-start gap-4">
+                <label class="w-64 text-sm text-gray-700 shrink-0 font-medium pt-2">Tanda Tangan Pemohon (E-sign) <span class="text-red-500">*</span></label>
+                <span class="text-gray-400 shrink-0 pt-2">:</span>
+                <div class="flex-1">
+                  <div class="border border-gray-300 rounded-lg overflow-hidden bg-white">
+                    <canvas id="signatureCanvas" class="w-full block bg-white" height="50"></canvas>
+                  </div>
+                  <div class="flex items-center justify-between mt-2">
+                    <p class="text-xs text-gray-400">Tanda tangan langsung di area di atas.</p>
+                    <button type="button" id="clearSignatureBtn" class="shrink-0 ml-3 px-3 py-1.5 rounded text-xs font-medium border border-gray-300 text-gray-600 hover:bg-gray-50 transition">Hapus &amp; Ulangi</button>
+                  </div>
+                  <p id="signatureError" class="hidden text-red-500 text-xs mt-1">Tanda tangan wajib diisi.</p>
+                  <input type="hidden" id="ttd_pemohon" name="ttd_pemohon">
                 </div>
-                <p id="signatureError" class="hidden text-red-500 text-xs mt-1">Tanda tangan wajib diisi.</p>
-                <input type="hidden" id="ttd_pemohon" name="ttd_pemohon">
+              </div>
+            </div>
+
+            <!-- Ketentuan Pengajuan -->
+            <div class="rounded-lg overflow-hidden mt-2" style="border: 1px solid #dbe4f0;">
+              <div class="flex items-center gap-2.5 px-4 py-2.5" style="background: linear-gradient(135deg, #1e3a6e 0%, #1e40af 100%);">
+                <span class="text-white text-xs font-bold tracking-wide uppercase">Ketentuan Pengajuan</span>
+              </div>
+              <div class="bg-slate-50 px-4 py-3.5">
+                <ul class="space-y-2.5">
+                  <li class="flex items-start gap-2.5">
+                    <span class="text-xs text-gray-700 leading-relaxed">Form ditandatangani langsung secara elektronik oleh pemohon (mahasiswa) pada area tanda tangan di atas.</span>
+                  </li>
+                  <li class="flex items-start gap-2.5">
+                    <span class="text-xs text-gray-700 leading-relaxed">Melampirkan draft softfile Karya Akhir yang telah disetujui Dosen Pembimbing Karya Akhir.</span>
+                  </li>
+                  <li class="flex items-start gap-2.5">
+                    <span class="text-xs text-gray-700 leading-relaxed">Form yang telah lengkap diisi dan ditandatangani beserta Draft softfile Karya Akhir diajukan melalui sistem ini.</span>
+                  </li>
+                </ul>
+              </div>
+            </div>
+
+            <p id="clientErrorStep1" class="hidden text-red-500 text-xs bg-red-50 border border-red-200 rounded-lg px-3 py-2"></p>
+          </div>
+
+          <div class="flex justify-end gap-3 py-6 px-8 border-t border-gray-100">
+            <button type="button" id="saveCloseBtn" class="px-6 py-2 rounded-lg bg-green-500 hover:bg-green-600 text-white text-sm font-semibold transition shadow-md shadow-green-200">
+             Tutup
+            </button>
+            <button type="button" onclick="goToStep(2)" class="px-6 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold transition shadow-md shadow-blue-200">
+              Next
+            </button>
+          </div>
+        </div>
+
+        <!-- =================== STEP 2: KONFIRMASI =================== -->
+        <div id="step2" class="step-content">
+          <div class="px-6 py-4 border-b border-gray-100" style="background: linear-gradient(135deg, #1e40af 0%, #2563eb 100%);">
+            <span class="text-white font-bold text-sm tracking-wide">KONFIRMASI PENDAFTARAN</span>
+            <p class="text-blue-200 text-xs mt-0.5">Informasi tahap persetujuan setelah pendaftaran dikirim</p>
+          </div>
+          <div class="px-8 py-6">
+            <p class="text-sm font-semibold text-gray-700 mb-3">Form Persetujuan (Setelah Pendaftaran Dikirim)</p>
+            <div class="border border-gray-200 rounded-lg bg-gray-50 px-6 py-5 opacity-70 pointer-events-none select-none">
+              <p class="text-sm font-bold text-gray-500">Form Persetujuan: <span class="italic font-semibold">(diisi oleh Kaprodi)</span></p>
+              <p class="text-xs text-gray-400 mt-3 leading-relaxed">
+                Dengan ini Ketua Program Studi menyetujui mahasiswa mendapat tim penguji
+                Seminar Proposal/Sidang Kolokium (*coret salah satu), yaitu:
+              </p>
+              <div class="mt-4 space-y-2 text-xs text-gray-400">
+                <div class="flex gap-2"><span class="w-32 shrink-0">Ketua Penguji</span><span>:</span><span class="flex-1 border-b border-dotted border-gray-300"></span></div>
+                <div class="flex gap-2"><span class="w-32 shrink-0">Anggota Penguji</span><span>:</span><span class="flex-1 border-b border-dotted border-gray-300"></span></div>
+              </div>
+              <p class="text-xs text-gray-400 mt-4 leading-relaxed">
+                Demikian Ketua Program Studi menyetujui keputusan tersebut untuk dapat dilanjutkan
+                sampai pada kegiatan sidang akhir dan diinformasikan ke mahasiswa serta pihak-pihak terkait.
+              </p>
+              <div class="mt-4 text-xs text-gray-400">
+                <p>Jakarta, ………………………</p>
+                <p class="mt-1">Menyetujui,</p>
+                <p class="mt-6 italic">e-sign Kaprodi</p>
+              </div>
+            </div>
+            <p class="text-xs text-gray-400 mt-2">
+              Bagian ini akan diisi dan ditandatangani oleh Kaprodi setelah pendaftaran kamu dikirim — tidak perlu diisi sekarang.
+            </p>
+          </div>
+          <div class="flex justify-end gap-3 py-6 px-8 border-t border-gray-100">
+            <button type="button" onclick="goToStep(1)" class="px-6 py-2 rounded-lg border border-gray-300 text-gray-600 text-sm font-semibold hover:bg-gray-50 transition">Kembali</button>
+            <button type="button" onclick="goToStep(3)" class="px-6 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold transition shadow-md shadow-blue-200">Lanjutkan</button>
+          </div>
+        </div>
+
+        <!-- =================== STEP 3: DETAIL & KIRIM =================== -->
+        <div id="step3" class="step-content">
+          <div class="px-6 py-4 border-b border-gray-100" style="background: linear-gradient(135deg, #1e40af 0%, #2563eb 100%);">
+            <span class="text-white font-bold text-sm tracking-wide">DETAIL PENDAFTARAN</span>
+            <p class="text-blue-200 text-xs mt-0.5">Periksa kembali seluruh data sebelum dikirim</p>
+          </div>
+          <div class="px-8 py-6 space-y-6">
+            <!-- Ringkasan Data -->
+            <div>
+              <div class="flex items-center justify-between mb-3">
+                <p class="text-sm font-bold text-gray-800">Ringkasan Data Pendaftaran</p>
+                <button type="button" onclick="goToStep(1)" class="text-xs font-semibold text-blue-600 hover:text-blue-700 border border-blue-200 hover:border-blue-300 hover:bg-blue-50 rounded-lg px-3 py-1.5 transition">Ubah Data</button>
+              </div>
+              <div id="ringkasanBox" class="rounded-xl overflow-hidden text-sm text-gray-700" style="border: 1px solid #dbe4f0; background: #f8fafc;">
+                <!-- Diisi via JS -->
+              </div>
+            </div>
+
+            <!-- Tanda Tangan -->
+            <div class="border-t border-gray-100 pt-5">
+              <p class="text-sm font-bold text-gray-800 mb-4">Tanda Tangan</p>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <p class="text-[11px] font-semibold uppercase tracking-wide mb-2" style="color: #7c8aa5;">Tanda Tangan Pemohon</p>
+                  <div class="border rounded-lg bg-white p-3 h-28 flex items-center justify-center" style="border-color: #dbe4f0;">
+                    <img id="ttdPreviewImg" src="" alt="Tanda tangan pemohon" class="h-20">
+                  </div>
+                </div>
+                <div>
+                  <p class="text-[11px] font-semibold uppercase tracking-wide mb-2" style="color: #7c8aa5;">Mengetahui, Dosen Pembimbing</p>
+                  <div class="border border-dashed rounded-lg bg-gray-50 p-3 h-28 flex flex-col items-center justify-center gap-1.5" style="border-color: #cbd5e1;">
+                    <span class="text-xs text-gray-400 text-center leading-relaxed">Menunggu tanda tangan<br>Dosen Pembimbing</span>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
-
-          <!-- Catatan resmi dari form -->
-          <div class="rounded-lg overflow-hidden mt-2" style="border: 1px solid #dbe4f0;">
-            <div class="flex items-center gap-2.5 px-4 py-2.5" style="background: linear-gradient(135deg, #1e3a6e 0%, #1e40af 100%);">
-              <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5z"></path>
-                <polyline points="14 2 14 8 20 8"></polyline>
-                <line x1="9" y1="13" x2="15" y2="13"></line>
-                <line x1="9" y1="17" x2="15" y2="17"></line>
-              </svg>
-              <span class="text-white text-xs font-bold tracking-wide uppercase">Ketentuan Pengajuan</span>
-            </div>
-            <div class="bg-slate-50 px-4 py-3.5">
-              <ul class="space-y-2.5">
-                <li class="flex items-start gap-2.5">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#1e40af" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="shrink-0 mt-0.5">
-                    <polyline points="20 6 9 17 4 12"></polyline>
-                  </svg>
-                  <span class="text-xs text-gray-700 leading-relaxed">Form ditandatangani langsung secara elektronik oleh pemohon (mahasiswa) pada area tanda tangan di atas.</span>
-                </li>
-                <li class="flex items-start gap-2.5">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#1e40af" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="shrink-0 mt-0.5">
-                    <polyline points="20 6 9 17 4 12"></polyline>
-                  </svg>
-                  <span class="text-xs text-gray-700 leading-relaxed">Melampirkan draft softfile Karya Akhir yang telah disetujui Dosen Pembimbing Karya Akhir.</span>
-                </li>
-                <li class="flex items-start gap-2.5">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#1e40af" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="shrink-0 mt-0.5">
-                    <polyline points="20 6 9 17 4 12"></polyline>
-                  </svg>
-                  <span class="text-xs text-gray-700 leading-relaxed">Form yang telah lengkap diisi dan ditandatangani beserta Draft softfile Karya Akhir diajukan melalui sistem ini.</span>
-                </li>
-              </ul>
-            </div>
+          <div class="flex justify-end gap-3 py-6 px-8 border-t border-gray-100">
+            <button type="button" onclick="goToStep(2)" class="px-6 py-2 rounded-lg border border-gray-300 text-gray-600 text-sm font-semibold hover:bg-gray-50 transition">Kembali</button>
+            <button type="submit" id="submitBtn" class="px-6 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold transition shadow-md shadow-blue-200">
+              <span id="submitBtnText">Kirim Pengajuan</span>
+            </button>
           </div>
-
-          <p id="clientError" class="hidden text-red-500 text-xs bg-red-50 border border-red-200 rounded-lg px-3 py-2"></p>
-        </div>
-
-        <div class="flex justify-end gap-3 py-6 px-8 border-t border-gray-100">
-          <button
-            type="button"
-            id="saveCloseBtn"
-            class="px-6 py-2 rounded-lg bg-green-500 hover:bg-green-600 text-white text-sm font-semibold transition shadow-md shadow-green-200"
-          >
-            Simpan &amp; Tutup
-          </button>
-          <button
-            type="button"
-            id="nextBtn"
-            class="px-6 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold transition shadow-md shadow-blue-200 flex items-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
-          >
-            <svg id="nextSpinner" class="hidden animate-spin" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <line x1="12" y1="2" x2="12" y2="6"></line>
-              <line x1="12" y1="18" x2="12" y2="22"></line>
-              <line x1="4.93" y1="4.93" x2="7.76" y2="7.76"></line>
-              <line x1="16.24" y1="16.24" x2="19.07" y2="19.07"></line>
-              <line x1="2" y1="12" x2="6" y2="12"></line>
-              <line x1="18" y1="12" x2="22" y2="12"></line>
-              <line x1="4.93" y1="19.07" x2="7.76" y2="16.24"></line>
-              <line x1="16.24" y1="7.76" x2="19.07" y2="4.93"></line>
-            </svg>
-            <span id="nextBtnText">Next</span>
-          </button>
         </div>
 
       </form>
@@ -310,11 +306,6 @@
 
   <script>
     const form = document.getElementById('pengajuanForm');
-    const nextBtn = document.getElementById('nextBtn');
-    const nextBtnText = document.getElementById('nextBtnText');
-    const nextSpinner = document.getElementById('nextSpinner');
-    const saveCloseBtn = document.getElementById('saveCloseBtn');
-    const clientError = document.getElementById('clientError');
     const noHpInput = document.getElementById('no_hp');
     const noHpError = document.getElementById('noHpError');
     const prodiSelect = document.getElementById('program_studi');
@@ -330,7 +321,7 @@
       }
     });
 
-    // Auto-pilih Jenis Sidang berdasarkan Program Studi (masih bisa diubah manual)
+    // Auto-pilih Jenis Sidang berdasarkan Program Studi
     prodiSelect.addEventListener('change', () => {
       if (prodiSelect.value === 'Teknik Informatika') {
         document.getElementById('jenis_seminar_proposal').checked = true;
@@ -349,8 +340,10 @@
     let hasSignature = false;
 
     function resizeCanvas() {
-      const ratio = window.devicePixelRatio || 1;
       const rect = canvas.getBoundingClientRect();
+      if (rect.width === 0 || rect.height === 0) return; // Prevent clearing when hidden
+
+      const ratio = window.devicePixelRatio || 1;
       const prevData = hasSignature ? canvas.toDataURL() : null;
 
       canvas.width = rect.width * ratio;
@@ -415,48 +408,127 @@
       ttdInput.value = '';
     });
 
-    function collectTextData() {
-      const formData = new FormData(form);
-      const dataToSave = {};
-      formData.forEach((value, key) => {
-        // File tidak disimpan di sessionStorage (File object tidak bisa di-serialize)
-        if (!(value instanceof File)) {
-          dataToSave[key] = value;
+    // ─── Multi-step Logic ───
+    function updateIndicators(step) {
+      for (let i = 1; i <= 3; i++) {
+        const circle = document.getElementById('ind' + i + '-circle');
+        const text = document.getElementById('ind' + i + '-text');
+        const line = document.getElementById('ind' + i + '-line');
+        if (i < step) {
+          circle.className = 'w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0 bg-green-500 text-white';
+          circle.innerHTML = '&#10003;';
+          text.className = 'text-xs font-medium text-gray-500';
+          if (line) line.className = 'w-8 h-px bg-blue-300';
+        } else if (i === step) {
+          circle.className = 'w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0 bg-blue-600 text-white';
+          circle.innerHTML = i;
+          text.className = 'text-xs font-medium text-blue-600';
+          if (line) line.className = 'w-8 h-px bg-gray-200';
+        } else {
+          circle.className = 'w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0 bg-gray-100 text-gray-400';
+          circle.innerHTML = i;
+          text.className = 'text-xs font-medium text-gray-400';
+          if (line) line.className = 'w-8 h-px bg-gray-200';
         }
-      });
-      return dataToSave;
+      }
     }
 
-    // Simpan & Tutup — simpan progres tanpa validasi penuh, balik ke dashboard
-    saveCloseBtn.addEventListener('click', () => {
-      sessionStorage.setItem('pengajuan_sidang_step1', JSON.stringify(collectTextData()));
-      window.location.href = '/dashboard/pemohon';
+    function goToStep(step, isPopState = false) {
+      if (step === 2 || step === 3) {
+        if (!form.checkValidity()) {
+          form.reportValidity();
+          return;
+        }
+        if (!hasSignature) {
+          signatureError.classList.remove('hidden');
+          canvas.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          return;
+        }
+      }
+
+      // Save signature before leaving step 1
+      if (document.getElementById('step1').classList.contains('active') && hasSignature) {
+        ttdInput.value = canvas.toDataURL('image/png');
+      }
+
+      if (step === 3) populateSummary();
+
+      document.querySelectorAll('.step-content').forEach(el => el.classList.remove('active'));
+      document.getElementById('step' + step).classList.add('active');
+      updateIndicators(step);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+
+      // Restore signature if returning to step 1
+      if (step === 1 && hasSignature && ttdInput.value) {
+        setTimeout(() => {
+          const img = new Image();
+          img.onload = () => {
+             const rect = canvas.getBoundingClientRect();
+             ctx.clearRect(0, 0, rect.width, rect.height);
+             ctx.drawImage(img, 0, 0, rect.width, rect.height);
+          };
+          img.src = ttdInput.value;
+        }, 50);
+      }
+
+      if (!isPopState) {
+        history.pushState({ step: step }, '', '#step' + step);
+      }
+    }
+
+    // Handle browser back/forward buttons
+    window.addEventListener('popstate', (e) => {
+      const step = e.state ? e.state.step : 1;
+      goToStep(step, true);
     });
 
-    // Next — validasi lengkap, simpan, lanjut ke step berikutnya
-    nextBtn.addEventListener('click', () => {
-      clientError.classList.add('hidden');
-      signatureError.classList.add('hidden');
+    // Set initial state
+    history.replaceState({ step: 1 }, '', '#step1');
 
-      if (!form.checkValidity()) {
-        form.reportValidity();
-        return;
+    function populateSummary() {
+      const box = document.getElementById('ringkasanBox');
+      const formData = new FormData(form);
+      
+      const labelMap = {
+        jenis_sidang: 'Jenis Sidang',
+        nama: 'Nama',
+        nim: 'NIM',
+        program_studi: 'Program Studi',
+        alamat: 'Alamat',
+        no_hp: 'No. HP',
+        email: 'Email',
+        judul_karya_akhir: 'Judul Karya Akhir',
+        file_draft_karya_akhir: 'Draft Softfile Karya Akhir'
+      };
+      
+      let html = '';
+      for (const [key, label] of Object.entries(labelMap)) {
+        let val = formData.get(key);
+        if (val instanceof File) {
+          val = val.name || 'Belum ada file dipilih';
+        } else {
+          val = val || '-';
+          if (key === 'jenis_sidang') val = val === 'seminar_proposal' ? 'Sidang Seminar Proposal' : 'Sidang Kolokium';
+        }
+        
+        html += `<div class="px-4 py-3 border-b" style="border-color: #e6ecf5;">
+          <p class="text-[11px] font-semibold uppercase tracking-wide" style="color: #7c8aa5;">${label}</p>
+          <p class="mt-0.5">${val}</p>
+        </div>`;
       }
+      box.innerHTML = html;
+      document.getElementById('ttdPreviewImg').src = canvas.toDataURL('image/png');
+    }
 
-      if (!hasSignature) {
-        signatureError.classList.remove('hidden');
-        canvas.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        return;
-      }
+    // Submit handler
+    form.addEventListener('submit', () => {
+      document.getElementById('submitBtn').disabled = true;
+      document.getElementById('submitBtnText').textContent = 'Mengirim...';
+      sessionStorage.removeItem('pengajuan_sidang_step1'); // clear legacy state
+    });
 
-      nextBtn.disabled = true;
-      nextBtnText.textContent = 'Memproses...';
-      nextSpinner.classList.remove('hidden');
-
-      sessionStorage.setItem('pengajuan_sidang_step1', JSON.stringify(collectTextData()));
-
-      // TODO: ganti dengan route halaman step 2 yang sebenarnya
-      window.location.href = '/dashboard/pemohon/pengajuan/baru/konfirmasi';
+    document.getElementById('saveCloseBtn').addEventListener('click', () => {
+      window.location.href = '/dashboard/pemohon';
     });
   </script>
 

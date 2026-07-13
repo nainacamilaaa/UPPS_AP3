@@ -1,40 +1,7 @@
-﻿const { validationResult } = require('express-validator');
+const { validationResult } = require('express-validator');
+const axios = require('axios');
 
-// Data dummy users (hardcoded)
-const dummyUsers = [
-  {
-    id: '1',
-    email: 'mahasiswa@test.com',
-    password: 'password123',
-    name: 'Mahasiswa Test',
-    nim: '2021001',
-    role: 'pemohon',
-    programStudi: 'Teknik Informatika',
-    alamat: 'Jakarta',
-    noHP: '08123456789'
-  },
-  {
-    id: '2',
-    email: 'kaprodi@test.com',
-    password: 'password123',
-    name: 'Kaprodi Test',
-    role: 'kaprodi'
-  },
-  {
-    id: '3',
-    email: 'admin@test.com',
-    password: 'password123',
-    name: 'Admin Test',
-    role: 'admin'
-  },
-  {
-    id: '4',
-    email: 'dosen@test.com',
-    password: 'password123',
-    name: 'Dosen Pembimbing Test',
-    role: 'dosen_pembimbing'
-  }
-];
+const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:5000/api';
 
 const ROLE_REDIRECT = {
   pemohon: '/dashboard/pemohon',
@@ -68,45 +35,42 @@ exports.postLogin = async (req, res) => {
 
     const { email, password } = req.body;
     
-    // Cari user di data dummy
-    const user = dummyUsers.find(u => u.email.toLowerCase() === email.toLowerCase());
-    
-    if (!user) {
-      req.flash('error', 'Email atau password salah');
-      return res.render('auth/login', {
-        title: 'Login - SIKA',
-        error: req.flash('error'),
-        email: email
-      });
+    // Autentikasi ke Backend
+    const response = await axios.post(`${BACKEND_URL}/auth/login`, {
+      email,
+      password
+    });
+
+    if (response.data.success) {
+      const userData = response.data.data;
+      
+      // Ambil header set-cookie (connect.sid dari backend)
+      const setCookieHeader = response.headers['set-cookie'];
+      let backendCookie = '';
+      if (setCookieHeader && setCookieHeader.length > 0) {
+        backendCookie = setCookieHeader[0].split(';')[0]; // simpan connect.sid
+      }
+
+      // Set session lokal di frontend
+      req.session.user = {
+        id: userData._id,
+        email: userData.email,
+        name: userData.name,
+        role: userData.role,
+        nim: userData.profile?.nim || '',
+        programStudi: userData.profile?.programStudi || '',
+        backendCookie: backendCookie // Simpan token sesi backend untuk request axios
+      };
+
+      // Redirect based on role
+      return res.redirect(ROLE_REDIRECT[userData.role] || '/');
     }
 
-    // Cek password (simple comparison untuk dummy)
-    if (user.password !== password) {
-      req.flash('error', 'Email atau password salah');
-      return res.render('auth/login', {
-        title: 'Login - SIKA',
-        error: req.flash('error'),
-        email: email
-      });
-    }
-
-    // Set session
-    req.session.user = {
-      id: user.id,
-      email: user.email,
-      name: user.name,
-      role: user.role,
-      nim: user.nim,
-      programStudi: user.programStudi
-    };
-
-    // Redirect based on role
-    res.redirect(ROLE_REDIRECT[user.role] || '/');
-    
   } catch (err) {
-    console.error('Login error:', err);
-    req.flash('error', 'Terjadi kesalahan sistem');
-    res.render('auth/login', {
+    console.error('Login error:', err.response?.data || err.message);
+    const errorMsg = err.response?.data?.error || 'Email atau password salah';
+    req.flash('error', errorMsg);
+    return res.render('auth/login', {
       title: 'Login - SIKA',
       error: req.flash('error'),
       email: req.body.email
@@ -114,7 +78,17 @@ exports.postLogin = async (req, res) => {
   }
 };
 
-exports.logout = (req, res) => {
+exports.logout = async (req, res) => {
+  try {
+    if (req.session.user && req.session.user.backendCookie) {
+      await axios.get(`${BACKEND_URL}/auth/logout`, {
+        headers: { Cookie: req.session.user.backendCookie }
+      });
+    }
+  } catch (err) {
+    console.error('Logout backend error:', err.message);
+  }
+
   req.session.destroy((err) => {
     if (err) console.error('Logout error:', err);
     res.redirect('/login');

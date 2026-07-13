@@ -21,7 +21,7 @@
 </head>
 <body class="bg-gray-100">
 
-  <%- include('../../partials/sidebar', { user: locals.user, currentPath: locals.currentPath }) %>
+  <%- include('../../partials/sidebar_dosen', { user: locals.user, currentPath: locals.currentPath }) %>
 
   <div class="min-h-screen">
     <!-- TOP BAR -->
@@ -185,11 +185,15 @@
                   </div>
 
                   <% if (p.status === 'menunggu') { %>
-                    <div class="flex flex-col gap-2 shrink-0 w-full md:w-auto">
-                      <a href="/dashboard/dosen/pengajuan/<%= p.id %>/detail" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-sm font-semibold text-white transition flex items-center justify-center gap-1.5 shadow-md shadow-blue-200">
+                    <div class="flex flex-col sm:flex-row gap-2 shrink-0 w-full md:w-auto" data-action-area>
+                      <a href="/dashboard/dosen/pengajuan/<%= p._id %>/detail" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-sm font-semibold text-white transition flex items-center justify-center gap-1.5 shadow-md shadow-blue-200 w-full sm:w-auto">
                         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5z"></path></svg>
                         Tanda Tangani
                       </a>
+                      <button type="button" data-id="<%= p._id %>" class="btn-tolak px-4 py-2 bg-white hover:bg-red-50 border border-red-200 rounded-lg text-sm font-semibold text-red-600 transition flex items-center justify-center gap-1.5 w-full sm:w-auto">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                        Tolak
+                      </button>
                     </div>
                   <% } %>
                 </div>
@@ -231,6 +235,46 @@
     </div>
   </div>
 
+  <!-- Modal Tolak -->
+  <div id="modalTolak" class="fixed inset-0 z-50 flex items-center justify-center p-4 opacity-0 pointer-events-none transition-opacity duration-300">
+    <div class="fixed inset-0 bg-gray-900/50 backdrop-blur-sm" onclick="closeModal('modalTolak')"></div>
+    <div class="bg-white rounded-2xl w-full max-w-md shadow-2xl relative transform scale-95 transition-transform duration-300">
+      <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-full bg-red-50 flex items-center justify-center shrink-0">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+          </div>
+          <div>
+            <h3 class="text-base font-bold text-gray-900">Tolak Pengajuan</h3>
+            <p class="text-xs text-gray-500 font-medium line-clamp-1" id="modalTolakSubtitle">Loading...</p>
+          </div>
+        </div>
+        <button onclick="closeModal('modalTolak')" class="text-gray-400 hover:text-gray-600 transition p-2 hover:bg-gray-50 rounded-lg">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
+      </div>
+      
+      <form id="formTolak" method="POST" action="">
+        <div class="p-6">
+          <label class="block text-sm font-semibold text-gray-700 mb-2">Alasan Penolakan <span class="text-red-500">*</span></label>
+          <textarea name="catatanDospem" required rows="4" 
+                    class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none transition text-sm resize-none"
+                    placeholder="Tuliskan alasan detail mengapa pengajuan ini ditolak..."></textarea>
+          <p class="text-[11px] text-gray-500 mt-2 font-medium">Alasan ini akan dikirimkan ke mahasiswa untuk perbaikan.</p>
+        </div>
+        
+        <div class="px-6 py-4 bg-gray-50 rounded-b-2xl border-t border-gray-100 flex items-center justify-end gap-3">
+          <button type="button" onclick="closeModal('modalTolak')" class="px-5 py-2.5 text-sm font-semibold text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 rounded-xl transition">
+            Batal
+          </button>
+          <button type="submit" class="px-5 py-2.5 text-sm font-semibold text-white bg-red-600 hover:bg-red-700 rounded-xl transition shadow-md shadow-red-200">
+            Tolak Pengajuan
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <script>
     // Filter & pencarian sisi client (data sudah dirender dari server)
     const searchInput = document.getElementById('searchInput');
@@ -250,6 +294,33 @@
 
     searchInput.addEventListener('input', applyFilter);
     statusFilter.addEventListener('change', applyFilter);
+
+    function openModal(modalId) {
+      const modal = document.getElementById(modalId);
+      if(modal) {
+        modal.classList.remove('opacity-0', 'pointer-events-none');
+        modal.querySelector('.transform').classList.remove('scale-95');
+      }
+    }
+
+    function closeModal(modalId) {
+      const modal = document.getElementById(modalId);
+      if(modal) {
+        modal.classList.add('opacity-0', 'pointer-events-none');
+        modal.querySelector('.transform').classList.add('scale-95');
+      }
+    }
+
+    document.querySelectorAll('.btn-tolak').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const activeCard = btn.closest('[data-card]');
+        const proposalId = btn.getAttribute('data-id');
+        document.getElementById('formTolak').action = '/dashboard/dosen/pengajuan/' + proposalId + '/tolak';
+        const judul = activeCard.querySelector('h3').textContent.trim();
+        document.getElementById('modalTolakSubtitle').textContent = judul;
+        openModal('modalTolak');
+      });
+    });
   </script>
 
 </body>
