@@ -8,6 +8,10 @@
   <style>
     @keyframes spin { to { transform: rotate(360deg); } }
     .animate-spin { animation: spin 1s linear infinite; }
+    #signatureCanvas {
+      touch-action: none;
+      cursor: crosshair;
+    }
   </style>
 </head>
 <body class="bg-gray-100">
@@ -87,24 +91,6 @@
           <p class="text-sm text-gray-600 italic -mb-1">Form Pendaftaran: (diisi oleh mahasiswa)</p>
           <p class="text-sm text-gray-700 mb-1">Yang bertanda tangan di bawah ini:</p>
 
-          <!-- Jenis Sidang -->
-          <div class="flex items-start gap-4">
-            <label class="w-64 text-sm text-gray-700 shrink-0 font-medium pt-2">
-              Jenis Sidang <span class="text-red-500">*</span>
-            </label>
-            <span class="text-gray-400 shrink-0 pt-2">:</span>
-            <div class="flex-1 flex flex-col sm:flex-row gap-3 pt-2">
-              <label class="flex items-center gap-2 text-sm text-gray-700">
-                <input type="radio" name="jenis_sidang" value="seminar_proposal" required class="text-blue-600 focus:ring-blue-500">
-                Sidang Seminar Proposal
-              </label>
-              <label class="flex items-center gap-2 text-sm text-gray-700">
-                <input type="radio" name="jenis_sidang" value="kolokium" required class="text-blue-600 focus:ring-blue-500">
-                Sidang Kolokium
-              </label>
-            </div>
-          </div>
-
           <!-- Nama -->
           <div class="flex items-start gap-4">
             <label for="nama" class="w-64 text-sm text-gray-700 shrink-0 font-medium pt-2">
@@ -137,8 +123,31 @@
             </label>
             <span class="text-gray-400 shrink-0 pt-2">:</span>
             <div class="flex-1">
-              <input type="text" id="program_studi" name="program_studi" required
+              <select id="program_studi" name="program_studi" required
                 class="w-full border border-gray-300 rounded px-3 py-2 text-sm text-gray-600 focus:outline-none focus:ring-1 focus:ring-blue-400 bg-white">
+                <option value="" disabled selected>Pilih Program Studi</option>
+                <option value="Teknik Informatika">Teknik Informatika</option>
+                <option value="Desain Produk">Desain Produk</option>
+                <option value="Desain Komunikasi Visual">Desain Komunikasi Visual</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Jenis Sidang -->
+          <div class="flex items-start gap-4">
+            <label class="w-64 text-sm text-gray-700 shrink-0 font-medium pt-2">
+              Jenis Sidang <span class="text-red-500">*</span>
+            </label>
+            <span class="text-gray-400 shrink-0 pt-2">:</span>
+            <div class="flex-1 flex flex-col sm:flex-row gap-3 pt-2">
+              <label class="flex items-center gap-2 text-sm text-gray-700">
+                <input type="radio" name="jenis_sidang" id="jenis_seminar_proposal" value="seminar_proposal" required class="text-blue-600 focus:ring-blue-500">
+                Sidang Seminar Proposal
+              </label>
+              <label class="flex items-center gap-2 text-sm text-gray-700">
+                <input type="radio" name="jenis_sidang" id="jenis_kolokium" value="kolokium" required class="text-blue-600 focus:ring-blue-500">
+                Sidang Kolokium
+              </label>
             </div>
           </div>
 
@@ -207,16 +216,25 @@
               </div>
             </div>
 
-            <!-- Upload Form Bertanda Tangan -->
+            <!-- Tanda Tangan (E-sign, canvas) -->
             <div class="flex items-start gap-4">
-              <label for="file_form_ttd" class="w-64 text-sm text-gray-700 shrink-0 font-medium pt-2">
-                Form Pendaftaran (E-sign) <span class="text-red-500">*</span>
+              <label class="w-64 text-sm text-gray-700 shrink-0 font-medium pt-2">
+                Tanda Tangan Pemohon (E-sign) <span class="text-red-500">*</span>
               </label>
               <span class="text-gray-400 shrink-0 pt-2">:</span>
               <div class="flex-1">
-                <input type="file" id="file_form_ttd" name="file_form_ttd" accept="application/pdf" required
-                  class="w-full text-sm text-gray-600 border border-gray-300 rounded px-3 py-2 file:mr-4 file:py-1 file:px-3 file:rounded file:border-0 file:text-xs file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 transition bg-white">
-                <p class="text-xs text-gray-400 mt-1">Ditandatangani pemohon dan Dosen Pembimbing Karya Akhir. Pastikan halaman ke-2 turut terlampir. Format PDF, maks 10MB.</p>
+                <div class="border border-gray-300 rounded-lg overflow-hidden bg-white">
+                  <canvas id="signatureCanvas" class="w-full block bg-white" height="50"></canvas>
+                </div>
+                <div class="flex items-center justify-between mt-2">
+                  <p class="text-xs text-gray-400">Tanda tangan langsung di area di atas menggunakan mouse / jari (layar sentuh).</p>
+                  <button type="button" id="clearSignatureBtn"
+                    class="shrink-0 ml-3 px-3 py-1.5 rounded text-xs font-medium border border-gray-300 text-gray-600 hover:bg-gray-50 transition">
+                    Hapus &amp; Ulangi
+                  </button>
+                </div>
+                <p id="signatureError" class="hidden text-red-500 text-xs mt-1">Tanda tangan wajib diisi.</p>
+                <input type="hidden" id="ttd_pemohon" name="ttd_pemohon">
               </div>
             </div>
           </div>
@@ -238,7 +256,7 @@
                   <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#1e40af" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="shrink-0 mt-0.5">
                     <polyline points="20 6 9 17 4 12"></polyline>
                   </svg>
-                  <span class="text-xs text-gray-700 leading-relaxed">Form ditandatangani oleh pemohon (mahasiswa) dan Dosen Pembimbing Karya Akhir — diperbolehkan berupa e-sign.</span>
+                  <span class="text-xs text-gray-700 leading-relaxed">Form ditandatangani langsung secara elektronik oleh pemohon (mahasiswa) pada area tanda tangan di atas.</span>
                 </li>
                 <li class="flex items-start gap-2.5">
                   <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#1e40af" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="shrink-0 mt-0.5">
@@ -251,12 +269,6 @@
                     <polyline points="20 6 9 17 4 12"></polyline>
                   </svg>
                   <span class="text-xs text-gray-700 leading-relaxed">Form yang telah lengkap diisi dan ditandatangani beserta Draft softfile Karya Akhir diajukan melalui sistem ini.</span>
-                </li>
-                <li class="flex items-start gap-2.5">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#1e40af" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="shrink-0 mt-0.5">
-                    <polyline points="20 6 9 17 4 12"></polyline>
-                  </svg>
-                  <span class="text-xs text-gray-700 leading-relaxed">Pastikan halaman ke-2 (lembar persetujuan) turut terlampir.</span>
                 </li>
               </ul>
             </div>
@@ -305,6 +317,7 @@
     const clientError = document.getElementById('clientError');
     const noHpInput = document.getElementById('no_hp');
     const noHpError = document.getElementById('noHpError');
+    const prodiSelect = document.getElementById('program_studi');
 
     // No. HP: hanya izinkan angka
     noHpInput.addEventListener('input', () => {
@@ -315,6 +328,91 @@
       } else {
         noHpError.classList.add('hidden');
       }
+    });
+
+    // Auto-pilih Jenis Sidang berdasarkan Program Studi (masih bisa diubah manual)
+    prodiSelect.addEventListener('change', () => {
+      if (prodiSelect.value === 'Teknik Informatika') {
+        document.getElementById('jenis_seminar_proposal').checked = true;
+      } else if (prodiSelect.value === 'Desain Produk' || prodiSelect.value === 'Desain Komunikasi Visual') {
+        document.getElementById('jenis_kolokium').checked = true;
+      }
+    });
+
+    // ─── Signature Pad ───
+    const canvas = document.getElementById('signatureCanvas');
+    const ctx = canvas.getContext('2d');
+    const clearSignatureBtn = document.getElementById('clearSignatureBtn');
+    const signatureError = document.getElementById('signatureError');
+    const ttdInput = document.getElementById('ttd_pemohon');
+    let drawing = false;
+    let hasSignature = false;
+
+    function resizeCanvas() {
+      const ratio = window.devicePixelRatio || 1;
+      const rect = canvas.getBoundingClientRect();
+      const prevData = hasSignature ? canvas.toDataURL() : null;
+
+      canvas.width = rect.width * ratio;
+      canvas.height = rect.height * ratio;
+      ctx.scale(ratio, ratio);
+      ctx.lineWidth = 2;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      ctx.strokeStyle = '#1e3a6e';
+
+      if (prevData) {
+        const img = new Image();
+        img.onload = () => ctx.drawImage(img, 0, 0, rect.width, rect.height);
+        img.src = prevData;
+      }
+    }
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    function getPos(e) {
+      const rect = canvas.getBoundingClientRect();
+      const point = e.touches ? e.touches[0] : e;
+      return { x: point.clientX - rect.left, y: point.clientY - rect.top };
+    }
+
+    function startDraw(e) {
+      e.preventDefault();
+      drawing = true;
+      hasSignature = true;
+      signatureError.classList.add('hidden');
+      const pos = getPos(e);
+      ctx.beginPath();
+      ctx.moveTo(pos.x, pos.y);
+    }
+
+    function draw(e) {
+      if (!drawing) return;
+      e.preventDefault();
+      const pos = getPos(e);
+      ctx.lineTo(pos.x, pos.y);
+      ctx.stroke();
+    }
+
+    function endDraw() {
+      if (!drawing) return;
+      drawing = false;
+      ttdInput.value = canvas.toDataURL('image/png');
+    }
+
+    canvas.addEventListener('mousedown', startDraw);
+    canvas.addEventListener('mousemove', draw);
+    window.addEventListener('mouseup', endDraw);
+
+    canvas.addEventListener('touchstart', startDraw, { passive: false });
+    canvas.addEventListener('touchmove', draw, { passive: false });
+    canvas.addEventListener('touchend', endDraw);
+
+    clearSignatureBtn.addEventListener('click', () => {
+      const rect = canvas.getBoundingClientRect();
+      ctx.clearRect(0, 0, rect.width, rect.height);
+      hasSignature = false;
+      ttdInput.value = '';
     });
 
     function collectTextData() {
@@ -338,9 +436,16 @@
     // Next — validasi lengkap, simpan, lanjut ke step berikutnya
     nextBtn.addEventListener('click', () => {
       clientError.classList.add('hidden');
+      signatureError.classList.add('hidden');
 
       if (!form.checkValidity()) {
         form.reportValidity();
+        return;
+      }
+
+      if (!hasSignature) {
+        signatureError.classList.remove('hidden');
+        canvas.scrollIntoView({ behavior: 'smooth', block: 'center' });
         return;
       }
 

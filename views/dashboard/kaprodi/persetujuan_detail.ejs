@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Detail Persetujuan Kaprodi - PPSU</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .animate-spin { animation: spin 1s linear infinite; }
+
+    .status-badge {
+      display: inline-flex; align-items: center; gap: 0.3rem;
+      padding: 0.3rem 0.75rem; border-radius: 9999px;
+      font-size: 0.72rem; font-weight: 600; letter-spacing: 0.01em;
+    }
+    .status-menunggu   { background: #fef3c7; color: #92400e; }
+    .status-disetujui  { background: #d1fae5; color: #065f46; }
+    .status-ditolak    { background: #fee2e2; color: #991b1b; }
+
+    .modal-overlay {
+      position: fixed; inset: 0; background: rgba(15, 23, 42, 0.45);
+      display: none; align-items: center; justify-content: center;
+      padding: 1rem; z-index: 50;
+    }
+    .modal-overlay.active { display: flex; }
+    @keyframes modalIn { from { opacity: 0; transform: translateY(8px) scale(.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
+    .modal-box { animation: modalIn .18s ease both; }
+
+    #signaturePad { touch-action: none; cursor: crosshair; }
+  </style>
+</head>
+<body class="bg-gray-100">
+
+  <%- include('../../partials/sidebar', { user: locals.user, currentPath: locals.currentPath }) %>
+
+  <div class="min-h-screen">
+
+    <!-- ─── TOP BAR ─── -->
+    <div class="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between" style="padding-left: 64px;">
+      <div class="flex items-center gap-3 pl-8">
+        <img src="/images/paramadinalogo.svg" alt="PPSU" class="h-7 object-contain">
+        <div class="w-px h-10 bg-gray-200"></div>
+        <div class="flex flex-col leading-tight">
+          <span class="text-sm font-bold text-gray-800">Detail Persetujuan</span>
+          <span class="text-[10px] font-semibold text-blue-600 uppercase tracking-wider">Panel Kaprodi</span>
+        </div>
+      </div>
+
+      <a href="/dashboard/kaprodi/persetujuan"
+         class="flex items-center gap-2.5 bg-blue-50 hover:bg-blue-100 border border-blue-100 rounded-full pl-2 pr-4 py-1.5 transition-colors shadow-sm">
+        <span class="w-6 h-6 rounded-full bg-blue-600 flex items-center justify-center shrink-0">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+          </svg>
+        </span>
+        <span class="text-xs font-semibold text-blue-700 whitespace-nowrap">Kembali ke Daftar</span>
+      </a>
+    </div>
+
+    <div class="px-6 py-8" style="padding-left: 64px;">
+      <div class="max-w-4xl mx-auto">
+
+        <% if (locals.success_msg && success_msg.length > 0) { %>
+          <p class="text-green-600 text-sm bg-green-50 border border-green-200 rounded-lg px-4 py-3 mb-4"><%= success_msg %></p>
+        <% } %>
+        <% if (locals.error_msg && error_msg.length > 0) { %>
+          <p class="text-red-500 text-sm bg-red-50 border border-red-200 rounded-lg px-4 py-3 mb-4"><%= error_msg %></p>
+        <% } %>
+
+        <div class="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
+
+          <!-- Header + Status -->
+          <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between"
+            style="background: linear-gradient(135deg, #1e40af 0%, #2563eb 100%);">
+            <div>
+              <span class="text-white font-bold text-sm tracking-wide">DETAIL PENGAJUAN SIDANG</span>
+              <p class="text-blue-200 text-xs mt-0.5"><%= pengajuan.judul_karya_akhir %></p>
+            </div>
+            <% if (pengajuan.statusKaprodi === 'disetujui') { %>
+              <span class="status-badge status-disetujui">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                Disetujui Kaprodi
+              </span>
+            <% } else if (pengajuan.statusKaprodi === 'ditolak') { %>
+              <span class="status-badge status-ditolak">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>
+                Ditolak
+              </span>
+            <% } else { %>
+              <span class="status-badge status-menunggu">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><polyline points="12 7 12 12 15 15"></polyline></svg>
+                Menunggu Persetujuan Kaprodi
+              </span>
+            <% } %>
+          </div>
+
+          <div class="px-8 py-6 space-y-6">
+
+            <!-- ── DATA PEMOHON (read-only) ── -->
+            <div>
+              <div class="flex items-center gap-2 mb-3">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1e40af" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5z"></path>
+                  <polyline points="14 2 14 8 20 8"></polyline>
+                </svg>
+                <p class="text-sm font-bold text-gray-800">Data Pendaftaran (Diisi Pemohon)</p>
+              </div>
+              <div class="rounded-xl overflow-hidden" style="border: 1px solid #dbe4f0; background: #f8fafc;">
+                <% const rows = [
+                  ['Jenis Sidang', pengajuan.jenisSidangLabel],
+                  ['Nama', pengajuan.nama],
+                  ['NIM', pengajuan.nim],
+                  ['Program Studi', pengajuan.program_studi],
+                  ['Alamat', pengajuan.alamat],
+                  ['No. HP', pengajuan.no_hp],
+                  ['Email', pengajuan.email],
+                  ['Judul Karya Akhir', pengajuan.judul_karya_akhir],
+                ]; %>
+                <% rows.forEach((r, i) => { %>
+                  <div class="flex items-start gap-3 px-4 py-3 <%= i !== rows.length - 1 ? 'border-b' : '' %>" style="border-color: #e6ecf5;">
+                    <div class="flex-1 min-w-0 pt-0.5">
+                      <p class="text-[11px] font-semibold uppercase tracking-wide" style="color: #7c8aa5;"><%= r[0] %></p>
+                      <p class="text-sm font-medium text-gray-800 mt-0.5 whitespace-pre-wrap leading-relaxed"><%= r[1] %></p>
+                    </div>
+                  </div>
+                <% }) %>
+              </div>
+            </div>
+
+            <!-- ── LAMPIRAN ── -->
+            <div class="border-t border-gray-100 pt-5">
+              <div class="flex items-center gap-2 mb-3">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1e40af" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path>
+                </svg>
+                <p class="text-sm font-bold text-gray-800">Lampiran Dokumen</p>
+              </div>
+              <div class="flex flex-wrap gap-2">
+                <% (pengajuan.lampiran || []).forEach(f => { %>
+                  <a href="<%= f.url %>" target="_blank" class="flex items-center gap-2 text-xs font-medium text-gray-600 bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-lg px-3 py-1.5 transition">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+                    <%= f.nama %>
+                  </a>
+                <% }) %>
+              </div>
+            </div>
+
+            <!-- ── TANDA TANGAN ── -->
+            <div class="border-t border-gray-100 pt-5">
+              <div class="flex items-center gap-2 mb-4">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1e40af" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5z"></path>
+                </svg>
+                <p class="text-sm font-bold text-gray-800">Tanda Tangan</p>
+              </div>
+
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <p class="text-[11px] font-semibold uppercase tracking-wide mb-2" style="color: #7c8aa5;">Tanda Tangan Dosen Pembimbing</p>
+                  <div class="border rounded-lg bg-white p-3 h-28 flex items-center justify-center" style="border-color: #dbe4f0;">
+                    <% if (pengajuan.ttd_dosen) { %>
+                      <img src="<%= pengajuan.ttd_dosen %>" alt="Tanda tangan dosen pembimbing" class="h-20">
+                    <% } else { %>
+                      <span class="text-xs text-gray-400">Belum ada tanda tangan</span>
+                    <% } %>
+                  </div>
+                </div>
+                <div>
+                  <p class="text-[11px] font-semibold uppercase tracking-wide mb-2" style="color: #7c8aa5;">Tanda Tangan Kaprodi</p>
+                  <div class="border rounded-lg bg-white p-3 h-28 flex items-center justify-center" style="border-color: #dbe4f0;">
+                    <% if (pengajuan.ttd_kaprodi) { %>
+                      <img src="<%= pengajuan.ttd_kaprodi %>" alt="Tanda tangan kaprodi" class="h-20">
+                    <% } else { %>
+                      <span class="text-xs text-gray-400">Belum ditandatangani</span>
+                    <% } %>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- ── INFO SIDANG (dijadwalkan Admin PPSU) ── -->
+            <div class="border-t border-gray-100 pt-5">
+              <div class="flex items-center gap-2 mb-3">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1e40af" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                </svg>
+                <p class="text-sm font-bold text-gray-800">Informasi Sidang (dari Admin PPSU)</p>
+              </div>
+
+              <% if (!pengajuan.jadwal) { %>
+                <div class="flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 p-3.5">
+                  <div>
+                    <p class="text-sm text-amber-800 font-semibold">Belum dijadwalkan</p>
+                    <p class="text-sm text-amber-700 mt-0.5">Menunggu Admin PPSU menentukan jadwal, ruang/link, dan tim penguji.</p>
+                  </div>
+                </div>
+              <% } else { %>
+                <% const j = pengajuan.jadwal; %>
+                <div class="rounded-xl border border-gray-200 overflow-hidden">
+                  <div class="px-4 py-2.5 flex items-center gap-2" style="background: linear-gradient(135deg, #1e40af 0%, #2563eb 100%);">
+                    <span class="text-xs font-bold text-white tracking-wide">JADWAL DITETAPKAN ADMIN PPSU</span>
+                  </div>
+                  <div class="grid grid-cols-1 md:grid-cols-3 gap-3 p-4" style="background:#f8fafc;">
+                    <div class="bg-white rounded-lg p-3 border border-gray-200">
+                      <p class="text-[11px] font-bold uppercase tracking-wide text-gray-500 mb-1.5">Jadwal Sidang</p>
+                      <p class="text-sm text-gray-800"><%= j.tanggal %></p>
+                      <p class="text-sm text-gray-800"><%= j.jamMulai %>–<%= j.jamSelesai %> WIB</p>
+                    </div>
+                    <div class="bg-white rounded-lg p-3 border border-gray-200">
+                      <p class="text-[11px] font-bold uppercase tracking-wide text-gray-500 mb-1.5">Tim Penguji</p>
+                      <% (j.penguji || []).forEach((pg, i) => { %>
+                        <p class="text-sm text-gray-800 font-medium"><%= i + 1 %>. <%= pg.nama %> <span class="text-gray-400 font-normal">(<%= pg.peran %>)</span></p>
+                      <% }) %>
+                    </div>
+                    <div class="bg-white rounded-lg p-3 border border-gray-200">
+                      <p class="text-[11px] font-bold uppercase tracking-wide text-gray-500 mb-1.5">Teknik Sidang</p>
+                      <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold <%= j.teknik === 'online' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-indigo-50 text-indigo-700 border border-indigo-200' %>">
+                        <%= j.teknik === 'online' ? 'Sidang Daring' : 'Sidang Tatap Muka' %>
+                      </span>
+                      <p class="text-gray-500 mt-1.5 text-xs truncate"><%= j.teknik === 'online' ? (j.linkMeeting || '-') : (j.ruang || '-') %></p>
+                    </div>
+                  </div>
+                </div>
+              <% } %>
+            </div>
+
+          </div>
+
+          <!-- ── AKSI ── -->
+          <div class="flex justify-end gap-3 py-6 px-8 border-t border-gray-100">
+            <% if (pengajuan.statusKaprodi === 'disetujui') { %>
+              <p class="text-sm text-emerald-700 font-medium flex items-center gap-2">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                Pengajuan ini sudah Anda setujui dan tandatangani.
+              </p>
+            <% } else if (pengajuan.statusKaprodi === 'ditolak') { %>
+              <div class="flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 p-3.5 w-full">
+                <div>
+                  <p class="text-sm text-red-800 font-semibold">Alasan Penolakan</p>
+                  <p class="text-sm text-red-700 mt-0.5"><%= pengajuan.alasanTolakKaprodi %></p>
+                </div>
+              </div>
+            <% } else { %>
+              <button type="button" id="btnTolak"
+                class="px-6 py-2 rounded-lg bg-white hover:bg-red-50 border border-red-200 text-sm font-semibold text-red-600 transition flex items-center gap-2">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                Tolak Pengajuan
+              </button>
+              <button type="button" id="btnSetujui" <%= !pengajuan.jadwal ? 'disabled' : '' %>
+                class="px-6 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold transition shadow-md shadow-blue-200 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                Setujui &amp; Tanda Tangani
+              </button>
+            <% } %>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════ MODAL: SETUJUI + TANDA TANGAN ══════════ -->
+  <div class="modal-overlay" id="modalSetujui">
+    <div class="modal-box bg-white rounded-2xl shadow-xl w-full max-w-lg overflow-hidden">
+      <div class="px-6 py-4 flex items-center justify-between" style="background: linear-gradient(135deg, #1e40af 0%, #2563eb 100%);">
+        <div>
+          <span class="text-white font-bold text-sm tracking-wide">SETUJUI PENGAJUAN</span>
+          <p class="text-blue-200 text-xs mt-0.5">Bubuhkan tanda tangan digital Anda untuk menyetujui</p>
+        </div>
+        <button type="button" class="modal-close text-white/80 hover:text-white" data-modal="modalSetujui">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
+      </div>
+
+      <form id="formSetujui" action="/dashboard/kaprodi/persetujuan/<%= pengajuan.id %>/setujui" method="POST" class="px-6 py-6 space-y-4">
+        <div>
+          <div class="flex items-center justify-between mb-2">
+            <label class="text-xs font-medium text-gray-600">Tanda Tangan Kaprodi <span class="text-red-500">*</span></label>
+            <button type="button" id="btnClearSign" class="text-xs font-semibold text-gray-400 hover:text-red-500 flex items-center gap-1">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"></path><path d="M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2"></path><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"></path></svg>
+              Hapus
+            </button>
+          </div>
+          <div class="border-2 border-dashed border-gray-300 rounded-lg bg-gray-50 overflow-hidden">
+            <canvas id="signaturePad" width="450" height="180" class="w-full bg-white"></canvas>
+          </div>
+          <p class="text-xs text-gray-400 mt-1.5">Gambar tanda tangan Anda menggunakan mouse atau layar sentuh di kotak di atas.</p>
+          <p id="signError" class="hidden text-xs text-red-500 mt-1">Tanda tangan wajib diisi sebelum menyetujui.</p>
+        </div>
+
+        <input type="hidden" name="ttd_kaprodi" id="hidden_ttd_kaprodi">
+
+        <div class="flex justify-end gap-3 pt-2 border-t border-gray-100">
+          <button type="button" class="modal-close px-5 py-2 rounded-lg border border-gray-300 text-gray-600 text-sm font-semibold hover:bg-gray-50 transition" data-modal="modalSetujui">Batal</button>
+          <button type="submit" id="btnSubmitSetujui" class="px-5 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold transition shadow-md shadow-blue-200 flex items-center gap-2 disabled:opacity-70">
+            <svg id="setujuiSpinner" class="hidden animate-spin" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="2" x2="12" y2="6"></line><line x1="12" y1="18" x2="12" y2="22"></line><line x1="4.93" y1="4.93" x2="7.76" y2="7.76"></line><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"></line><line x1="2" y1="12" x2="6" y2="12"></line><line x1="18" y1="12" x2="22" y2="12"></line><line x1="4.93" y1="19.07" x2="7.76" y2="16.24"></line><line x1="16.24" y1="7.76" x2="19.07" y2="4.93"></line></svg>
+            <span id="setujuiBtnText">Simpan &amp; Setujui</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ══════════ MODAL: TOLAK PENGAJUAN ══════════ -->
+  <div class="modal-overlay" id="modalTolak">
+    <div class="modal-box bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden">
+      <div class="px-6 py-4 flex items-center justify-between" style="background: linear-gradient(135deg, #991b1b 0%, #dc2626 100%);">
+        <div>
+          <span class="text-white font-bold text-sm tracking-wide">TOLAK PENGAJUAN</span>
+          <p class="text-red-200 text-xs mt-0.5">Beri alasan agar pemohon bisa merevisi</p>
+        </div>
+        <button type="button" class="modal-close text-white/80 hover:text-white" data-modal="modalTolak">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
+      </div>
+      <form action="/dashboard/kaprodi/persetujuan/<%= pengajuan.id %>/tolak" method="POST" class="px-6 py-6 space-y-4">
+        <div>
+          <label class="block text-xs font-medium text-gray-600 mb-1.5">Alasan Penolakan <span class="text-red-500">*</span></label>
+          <textarea name="alasan" rows="4" required placeholder="Contoh: Judul karya akhir belum sesuai dengan topik yang disetujui program studi."
+            class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-400 resize-none"></textarea>
+        </div>
+        <div class="flex justify-end gap-3 pt-2 border-t border-gray-100">
+          <button type="button" class="modal-close px-5 py-2 rounded-lg border border-gray-300 text-gray-600 text-sm font-semibold hover:bg-gray-50 transition" data-modal="modalTolak">Batal</button>
+          <button type="submit" class="px-5 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white text-sm font-semibold transition shadow-md shadow-red-200">Tolak Pengajuan</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    function openModal(id) { document.getElementById(id).classList.add('active'); }
+    function closeModal(id) { document.getElementById(id).classList.remove('active'); }
+    document.querySelectorAll('.modal-close').forEach(btn => btn.addEventListener('click', () => closeModal(btn.dataset.modal)));
+    document.querySelectorAll('.modal-overlay').forEach(overlay => overlay.addEventListener('click', e => { if (e.target === overlay) closeModal(overlay.id); }));
+
+    const btnSetujui = document.getElementById('btnSetujui');
+    const btnTolak = document.getElementById('btnTolak');
+    if (btnTolak) btnTolak.addEventListener('click', () => openModal('modalTolak'));
+
+    let ctx, canvas, hasSigned = false, drawing = false;
+
+    if (btnSetujui) {
+      btnSetujui.addEventListener('click', () => {
+        openModal('modalSetujui');
+        setTimeout(setupCanvas, 50);
+      });
+    }
+
+    function setupCanvas() {
+      canvas = document.getElementById('signaturePad');
+      ctx = canvas.getContext('2d');
+      const ratio = window.devicePixelRatio || 1;
+      const rect = canvas.getBoundingClientRect();
+      canvas.width = rect.width * ratio;
+      canvas.height = 180 * ratio;
+      ctx.scale(ratio, ratio);
+      ctx.lineWidth = 2.2;
+      ctx.lineCap = 'round';
+      ctx.strokeStyle = '#1e293b';
+
+      function getPos(e) {
+        const r = canvas.getBoundingClientRect();
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+        return { x: clientX - r.left, y: clientY - r.top };
+      }
+      function start(e) { drawing = true; hasSigned = true; const p = getPos(e); ctx.beginPath(); ctx.moveTo(p.x, p.y); e.preventDefault(); }
+      function move(e) { if (!drawing) return; const p = getPos(e); ctx.lineTo(p.x, p.y); ctx.stroke(); e.preventDefault(); }
+      function end() { drawing = false; }
+
+      canvas.addEventListener('mousedown', start);
+      canvas.addEventListener('mousemove', move);
+      window.addEventListener('mouseup', end);
+      canvas.addEventListener('touchstart', start, { passive: false });
+      canvas.addEventListener('touchmove', move, { passive: false });
+      canvas.addEventListener('touchend', end);
+
+      document.getElementById('btnClearSign').onclick = () => {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        hasSigned = false;
+        document.getElementById('signError').classList.add('hidden');
+      };
+    }
+
+    const formSetujui = document.getElementById('formSetujui');
+    if (formSetujui) {
+      formSetujui.addEventListener('submit', (e) => {
+        if (!hasSigned) {
+          e.preventDefault();
+          document.getElementById('signError').classList.remove('hidden');
+          return;
+        }
+        document.getElementById('hidden_ttd_kaprodi').value = canvas.toDataURL('image/png');
+
+        const submitBtn = document.getElementById('btnSubmitSetujui');
+        submitBtn.disabled = true;
+        document.getElementById('setujuiBtnText').textContent = 'Menyimpan...';
+        document.getElementById('setujuiSpinner').classList.remove('hidden');
+        // form lanjut submit normal (server redirect ke /dashboard/kaprodi/persetujuan)
+      });
+    }
+  </script>
+
+</body>
+</html>

@@ -127,17 +127,40 @@
                 <p class="text-xs text-gray-400 mt-1">Draft yang telah disetujui Dosen Pembimbing Karya Akhir. Format PDF, maks 10MB.</p>
               </div>
             </div>
+          </div>
 
-            <div class="flex items-start gap-4">
-              <label for="file_form_ttd" class="w-64 text-sm text-gray-700 shrink-0 font-medium pt-2">
-                Form Pendaftaran (E-sign) <span class="text-red-500">*</span>
-              </label>
-              <span class="text-gray-400 shrink-0 pt-2">:</span>
-              <div class="flex-1">
-                <input type="file" id="file_form_ttd" name="file_form_ttd" accept="application/pdf" required
-                  class="w-full text-sm text-gray-600 border border-gray-300 rounded px-3 py-2 file:mr-4 file:py-1 file:px-3 file:rounded file:border-0 file:text-xs file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 transition bg-white">
-                <p class="text-xs text-gray-400 mt-1">Ditandatangani pemohon dan Dosen Pembimbing Karya Akhir. Pastikan halaman ke-2 turut terlampir. Format PDF, maks 10MB.</p>
+          <!-- ── TANDA TANGAN (Pemohon + slot Dosen Pembimbing) ── -->
+          <div class="border-t border-gray-100 pt-5">
+            <div class="flex items-center gap-2 mb-4">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1e40af" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5z"></path>
+              </svg>
+              <p class="text-sm font-bold text-gray-800">Tanda Tangan</p>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+
+              <!-- Kiri: Tanda Tangan Pemohon -->
+              <div>
+                <p class="text-[11px] font-semibold uppercase tracking-wide mb-2" style="color: #7c8aa5;">Tanda Tangan Pemohon</p>
+                <div id="ttdPemohonWrap" class="border rounded-lg bg-white p-3 h-28 flex items-center justify-center" style="border-color: #dbe4f0;">
+                  <img id="ttdPreviewImg" src="" alt="Tanda tangan pemohon" class="hidden h-20">
+                  <span id="ttdPemohonEmpty" class="text-xs text-gray-400">Belum ada tanda tangan</span>
+                </div>
               </div>
+
+              <!-- Kanan: Slot terkunci, diisi Dosen Pembimbing nanti -->
+              <div>
+                <p class="text-[11px] font-semibold uppercase tracking-wide mb-2" style="color: #7c8aa5;">Mengetahui, Dosen Pembimbing</p>
+                <div class="border border-dashed rounded-lg bg-gray-50 p-3 h-28 flex flex-col items-center justify-center gap-1.5" style="border-color: #cbd5e1;">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#9aa5b5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="3" y="11" width="18" height="11" rx="2"></rect>
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                  </svg>
+                  <span class="text-xs text-gray-400 text-center leading-relaxed">Menunggu tanda tangan<br>Dosen Pembimbing</span>
+                </div>
+              </div>
+
             </div>
           </div>
 
@@ -180,6 +203,7 @@
         <input type="hidden" name="no_hp" id="hidden_no_hp">
         <input type="hidden" name="email" id="hidden_email">
         <input type="hidden" name="judul_karya_akhir" id="hidden_judul_karya_akhir">
+        <input type="hidden" name="ttd_pemohon" id="hidden_ttd_pemohon">
 
       </form>
     </div>
@@ -271,6 +295,17 @@
         const el = document.getElementById('hidden_' + key);
         if (el) el.value = data[key] || '';
       });
+
+      // Tanda tangan pemohon (base64) — preview gambar + isi hidden input
+      const ttdInput = document.getElementById('hidden_ttd_pemohon');
+      const ttdImg = document.getElementById('ttdPreviewImg');
+      const ttdEmpty = document.getElementById('ttdPemohonEmpty');
+      if (data.ttd_pemohon) {
+        ttdInput.value = data.ttd_pemohon;
+        ttdImg.src = data.ttd_pemohon;
+        ttdImg.classList.remove('hidden');
+        ttdEmpty.classList.add('hidden');
+      }
     }
 
     const data = loadData();

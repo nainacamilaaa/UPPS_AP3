@@ -23,17 +23,23 @@ async function seed() {
         noHP: '08123456789'
       },
       {
-        email: 'kaprodi@test.com',
+        email: 'dosen@test.com',
         password: 'password123',
-        name: 'Kaprodi Test',
-        role: 'kaprodi'
+        name: 'Dosen Pembimbing Test',
+        role: 'dosen_pembimbing'
       },
       {
         email: 'admin@test.com',
         password: 'password123',
         name: 'Admin Test',
         role: 'admin'
-      }
+      },
+      {
+        email: 'kaprodi@test.com',
+        password: 'password123',
+        name: 'Kaprodi Test',
+        role: 'kaprodi'
+      },
     ];
     
     for (const userData of users) {

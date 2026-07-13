@@ -26,13 +26,21 @@ const dummyUsers = [
     password: 'password123',
     name: 'Admin Test',
     role: 'admin'
+  },
+  {
+    id: '4',
+    email: 'dosen@test.com',
+    password: 'password123',
+    name: 'Dosen Pembimbing Test',
+    role: 'dosen_pembimbing'
   }
 ];
 
 const ROLE_REDIRECT = {
   pemohon: '/dashboard/pemohon',
   kaprodi: '/dashboard/kaprodi',
-  admin: '/dashboard/admin'
+  admin: '/dashboard/admin',
+  dosen_pembimbing: '/dashboard/dosen'
 };
 
 exports.getLogin = (req, res) => {
