@@ -22,7 +22,7 @@ const UserSchema = new mongoose.Schema(
     },
     role: {
       type: String,
-      enum: ['pemohon', 'dosen_pembimbing', 'kaprodi', 'admin'],
+      enum: ['pemohon', 'mahasiswa', 'dosen_pembimbing', 'kaprodi', 'admin'],
       default: 'pemohon',
       required: true
     },

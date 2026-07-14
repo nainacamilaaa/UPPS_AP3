@@ -9,7 +9,7 @@ const router = express.Router();
 router.post(
   '/',
   isAuthenticated,
-  hasRole(['pemohon']),
+  hasRole(['pemohon', 'mahasiswa']),
   uploadProposalFiles,
   controller.createProposal
 );
@@ -17,7 +17,7 @@ router.post(
 router.get(
   '/me',
   isAuthenticated,
-  hasRole(['pemohon']),
+  hasRole(['pemohon', 'mahasiswa']),
   controller.getMyProposals
 );
 

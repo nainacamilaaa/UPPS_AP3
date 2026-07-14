@@ -21,11 +21,20 @@ router.get(
 // Callback Google OAuth
 router.get(
   '/google/callback',
-  passport.authenticate('google', {
-    failureRedirect: '/login',
-    failureMessage: true
-  }),
-  controller.loginSuccess
+  (req, res, next) => {
+    passport.authenticate('google', (err, user, info) => {
+      if (err) return next(err);
+      if (!user) {
+        const msg = info && info.message ? encodeURIComponent(info.message) : 'Autentikasi gagal';
+        return res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:3000'}/login?error=${msg}`);
+      }
+      req.logIn(user, (loginErr) => {
+        if (loginErr) return next(loginErr);
+        // Pass session to frontend via redirect
+        res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:3000'}/auth/google/success`);
+      });
+    })(req, res, next);
+  }
 );
 
 // ==================== SESSION ====================

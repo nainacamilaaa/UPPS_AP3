@@ -41,6 +41,7 @@ app.use('/src/uploads', express.static('src/uploads'));
 
 // ==================== SESSION ====================
 app.use(session({
+  name: 'api.sid',
   secret: process.env.SESSION_SECRET || 'default_secret',
   resave: false,
   saveUninitialized: false,
