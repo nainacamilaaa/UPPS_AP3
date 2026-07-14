@@ -46,7 +46,7 @@ const upload = multer({
 });
 
 // GET — tampilkan form data pendaftaran
-router.get('/baru', isAuthenticated, isRole(['pemohon']), (req, res) => {
+router.get('/baru', isAuthenticated, isRole(['pemohon', 'mahasiswa']), (req, res) => {
   res.render('dashboard/pemohon/pengajuan-baru', {
     title: 'Formulir Pendaftaran Sidang',
     user: req.session.user,
@@ -55,17 +55,17 @@ router.get('/baru', isAuthenticated, isRole(['pemohon']), (req, res) => {
 });
 
 // GET — tampilkan halaman konfirmasi (redirect ke SPA)
-router.get('/baru/konfirmasi', isAuthenticated, isRole(['pemohon']), (req, res) => {
+router.get('/baru/konfirmasi', isAuthenticated, isRole(['pemohon', 'mahasiswa']), (req, res) => {
   res.redirect('/dashboard/pemohon/pengajuan/baru');
 });
 
 // GET — tampilkan halaman detail (redirect ke SPA)
-router.get('/baru/detail', isAuthenticated, isRole(['pemohon']), (req, res) => {
+router.get('/baru/detail', isAuthenticated, isRole(['pemohon', 'mahasiswa']), (req, res) => {
   res.redirect('/dashboard/pemohon/pengajuan/baru');
 });
 
 // POST — proses submit form ke Backend API
-router.post('/baru/detail', isAuthenticated, isRole(['pemohon']), upload.fields([
+router.post('/baru/detail', isAuthenticated, isRole(['pemohon', 'mahasiswa']), upload.fields([
   { name: 'file_draft_karya_akhir', maxCount: 1 }
 ]), async (req, res) => {
   try {

@@ -5,12 +5,17 @@ const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:5000/api';
 
 const ROLE_REDIRECT = {
   pemohon: '/dashboard/pemohon',
+  mahasiswa: '/dashboard/pemohon',
   kaprodi: '/dashboard/kaprodi',
   admin: '/dashboard/admin',
   dosen_pembimbing: '/dashboard/dosen'
 };
 
 exports.getLogin = (req, res) => {
+  if (req.query.error) {
+    req.flash('error', req.query.error);
+    return res.redirect('/login');
+  }
   if (req.session.user) {
     return res.redirect(ROLE_REDIRECT[req.session.user.role] || '/');
   }
@@ -75,6 +80,45 @@ exports.postLogin = async (req, res) => {
       error: req.flash('error'),
       email: req.body.email
     });
+  }
+};
+
+exports.googleSuccess = async (req, res) => {
+  try {
+    const response = await axios.get(`${BACKEND_URL}/auth/session`, {
+      headers: { Cookie: req.headers.cookie }
+    });
+
+    if (response.data.success) {
+      const userData = response.data.data;
+      
+      const cookies = req.headers.cookie ? req.headers.cookie.split(';') : [];
+      let backendCookie = '';
+      for (const c of cookies) {
+        if (c.trim().startsWith('api.sid=')) {
+          backendCookie = c.trim();
+        }
+      }
+
+      req.session.user = {
+        id: userData._id,
+        email: userData.email,
+        name: userData.name,
+        role: userData.role,
+        nim: userData.profile?.nim || '',
+        programStudi: userData.profile?.programStudi || '',
+        backendCookie: backendCookie
+      };
+
+      return res.redirect(ROLE_REDIRECT[userData.role] || '/');
+    } else {
+      req.flash('error', 'Sesi tidak valid');
+      return res.redirect('/login');
+    }
+  } catch (err) {
+    console.error('Google success error:', err.message);
+    req.flash('error', 'Gagal memverifikasi sesi Google');
+    return res.redirect('/login');
   }
 };
 

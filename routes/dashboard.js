@@ -16,7 +16,7 @@ function getAxiosConfig(req) {
 // ============ PEMOHON ROUTES ============
 
 // Dashboard Pemohon
-router.get('/pemohon', isAuthenticated, isRole(['pemohon']), async (req, res) => {
+router.get('/pemohon', isAuthenticated, isRole(['pemohon', 'mahasiswa']), async (req, res) => {
   try {
     const response = await axios.get(`${BACKEND_URL}/proposal/me`, getAxiosConfig(req));
     const proposals = response.data?.data || [];
@@ -34,7 +34,7 @@ router.get('/pemohon', isAuthenticated, isRole(['pemohon']), async (req, res) =>
 });
 
 // Data Management Pemohon
-router.get('/pemohon/data-management', isAuthenticated, isRole(['pemohon']), async (req, res) => {
+router.get('/pemohon/data-management', isAuthenticated, isRole(['pemohon', 'mahasiswa']), async (req, res) => {
   try {
     const response = await axios.get(`${BACKEND_URL}/proposal/me`, getAxiosConfig(req));
     const proposals = response.data?.data || [];
